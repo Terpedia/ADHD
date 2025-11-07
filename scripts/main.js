@@ -367,6 +367,14 @@ const updateBadgeTimestamp = () => {
   badge.classList.toggle("is-outdated", Boolean(isOutdated));
 };
 
+const getFlowPapers = (flow) => {
+  if (!flow) return [];
+  if (Array.isArray(flow.paperClasses) && flow.paperClasses.length) {
+    return flow.paperClasses.flatMap((group) => group.documents || []);
+  }
+  return Array.isArray(flow.papers) ? flow.papers : [];
+};
+
 const getTopTerms = (abstracts, limit = 8) => {
   const frequencies = new Map();
   const text = abstracts.join(" ").toLowerCase();
@@ -493,11 +501,20 @@ const createNodeShell = ({ id, label, title, x, y, lane }) => {
 const connectNodes = (fromId, toId) => {
   const instance = ensureJsPlumbInstance();
   if (!instance) return;
+  const sourceEl = document.getElementById(fromId);
+  const targetEl = document.getElementById(toId);
+  const sourceLane = sourceEl?.dataset?.lane || null;
+  const targetLane = targetEl?.dataset?.lane || null;
+  let anchors = ["Bottom", "Top"];
+  if (sourceLane === "answers" && targetLane === "artifacts") {
+    anchors = ["Right", "Left"];
+  }
 
   instance.connect({
     source: fromId,
     target: toId,
-    anchors: ["Bottom", "Top"],
+    anchors,
+    cssClass: "flow-connection",
   });
 };
 
@@ -562,7 +579,8 @@ const buildLLMNode = ({ id, position, flow }) => {
   });
   node.classList.add("node--answer");
 
-  const markdown = buildLLMAnswer(flow.question, flow.papers);
+    const papers = getFlowPapers(flow);
+    const markdown = buildLLMAnswer(flow.question, papers);
   renderMarkdown(body, markdown);
   body.querySelectorAll("p").forEach((paragraph) => {
     paragraph.style.marginBottom = "0.9rem";

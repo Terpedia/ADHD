@@ -1,0 +1,298 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://adhd-terpedia.local/schemas/terpene-literature-review.schema.json",
+  "title": "TerpeneLiteratureReviewOutput",
+  "description": "Structured summary of terpene × ADHD literature, organized by classification buckets and ready for RAG ingestion.",
+  "type": "object",
+  "required": [
+    "query",
+    "classification",
+    "evidenceSummary",
+    "mechanisticMap",
+    "gaps",
+    "references"
+  ],
+  "properties": {
+    "query": {
+      "type": "object",
+      "description": "Top-level query parameters that produced this review.",
+      "required": ["focus", "lastUpdated", "retrievalWindow"],
+      "properties": {
+        "focus": {
+          "type": "string",
+          "description": "Primary research question or topic statement."
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date",
+          "description": "Date of the most recent ingestion."
+        },
+        "retrievalWindow": {
+          "type": "string",
+          "description": "Time span used for the literature pull (e.g., 2012-2024)."
+        },
+        "filters": {
+          "type": "array",
+          "description": "Filters (e.g., age groups, study types) applied to the retrieval process.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "classification": {
+      "type": "array",
+      "description": "Corpus clustered into thematic buckets that will each seed a RAG index.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["label", "description", "documentCount", "topDocuments"],
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Name of the class (e.g., Working Memory, Emotional Regulation)."
+          },
+          "description": {
+            "type": "string",
+            "description": "2–3 sentence overview of the class."
+          },
+          "documentCount": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of documents in the class."
+          },
+          "topDocuments": {
+            "type": "array",
+            "description": "Representative papers for the class, ordered by relevance.",
+            "minItems": 3,
+            "items": {
+              "type": "object",
+              "required": ["pmid", "title", "year", "terpenes", "summary"],
+              "properties": {
+                "pmid": { "type": "string" },
+                "title": { "type": "string" },
+                "year": { "type": "integer" },
+                "journal": { "type": "string" },
+                "terpenes": {
+                  "type": "array",
+                  "description": "Primary terpenes discussed in the document.",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "≤ 80 word synopsis highlighting ADHD relevance."
+                },
+                "link": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "embeddingKey": {
+            "type": "string",
+            "description": "Identifier for the vector store name or index segment backing this class."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "evidenceSummary": {
+      "type": "object",
+      "description": "Global synthesis across the terpene corpus.",
+      "required": ["headline", "trends", "readinessSignals"],
+      "properties": {
+        "headline": {
+          "type": "string",
+          "description": "Single-sentence top-line insight."
+        },
+        "trends": {
+          "type": "array",
+          "description": "Major trends observed across the literature.",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["statement", "support"],
+            "properties": {
+              "statement": { "type": "string" },
+              "support": { "type": "string" },
+              "strength": {
+                "type": "string",
+                "enum": ["robust", "moderate", "limited", "emerging"]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "readinessSignals": {
+          "type": "array",
+          "description": "Regulatory, clinical, and market signals from the corpus.",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["dimension", "observation"],
+            "properties": {
+              "dimension": {
+                "type": "string",
+                "enum": ["clinical", "regulatory", "market", "supply", "safety"]
+              },
+              "observation": {
+                "type": "string",
+                "description": "≤ 50 word summary tied to evidence."
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "mechanisticMap": {
+      "type": "array",
+      "description": "Links terpenes to neurobiological mechanisms and ADHD outcomes.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["terpene", "mechanisms", "outcomes"],
+        "properties": {
+          "terpene": {
+            "type": "string"
+          },
+          "mechanisms": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["pathway", "evidence"],
+              "properties": {
+                "pathway": {
+                  "type": "string",
+                  "description": "Named neurological, endocrine, or behavioral pathway."
+                },
+                "evidence": {
+                  "type": "string",
+                  "description": "Key observation linking the pathway to ADHD symptoms."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "outcomes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["endpoint", "direction"],
+              "properties": {
+                "endpoint": {
+                  "type": "string",
+                  "description": "Measured outcome (e.g., sustained attention, hyperactivity)."
+                },
+                "direction": {
+                  "type": "string",
+                  "enum": ["improves", "reduces", "neutral", "mixed"]
+                },
+                "notes": {
+                  "type": "string",
+                  "description": "Optional nuance or conditional statement."
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "description": "Research or data gaps surfaced during review.",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["gap", "impact", "suggestedAction"],
+        "properties": {
+          "gap": {
+            "type": "string",
+            "description": "Description of the missing evidence."
+          },
+          "impact": {
+            "type": "string",
+            "description": "Why the gap matters for ADHD terpene development."
+          },
+          "suggestedAction": {
+            "type": "string",
+            "description": "Recommended next step (experiment, outreach, data acquisition)."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "references": {
+      "type": "array",
+      "description": "Full bibliography with structured metadata.",
+      "minItems": 10,
+      "items": {
+        "type": "object",
+        "required": ["pmid", "title", "year", "authors", "journal"],
+        "properties": {
+          "pmid": { "type": "string" },
+          "title": { "type": "string" },
+          "authors": { "type": "string" },
+          "year": { "type": "integer" },
+          "journal": { "type": "string" },
+          "terpenes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "studyDesign": { "type": "string" },
+          "population": { "type": "string" },
+          "outcomes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "findings": {
+            "type": "string",
+            "description": "≤ 60 word plain-language summary."
+          },
+          "link": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "attachments": {
+      "type": "object",
+      "description": "Optional external references such as dataset URIs or vector store IDs.",
+      "properties": {
+        "datasetUri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "ragStores": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["label", "storeId"],
+            "properties": {
+              "label": { "type": "string" },
+              "storeId": { "type": "string" },
+              "notes": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

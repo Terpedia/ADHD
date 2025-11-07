@@ -1,0 +1,307 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://adhd-terpedia.local/schemas/metastudy.schema.json",
+  "title": "MetastudyOutput",
+  "description": "Structured output specification for the metastudy artifact rendered in the inquiry canvas.",
+  "type": "object",
+  "required": ["title", "copy", "cta", "link", "display", "scope"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Short headline for the metastudy card."
+    },
+    "copy": {
+      "type": "string",
+      "description": "Markdown-ready narrative (≤ 280 words) summarizing the metastudy."
+    },
+    "cta": {
+      "type": "string",
+      "description": "Call-to-action label for downstream navigation."
+    },
+    "link": {
+      "type": "string",
+      "description": "Canonical URL or internal anchor to open the full metastudy.",
+      "format": "uri-reference"
+    },
+    "display": {
+      "type": "object",
+      "description": "UI hints for rendering in the artifact node.",
+      "required": ["tagline", "bulletPoints"],
+      "properties": {
+        "tagline": {
+          "type": "string",
+          "description": "Single sentence that sets context for the metastudy."
+        },
+        "bulletPoints": {
+          "type": "array",
+          "description": "Three to five succinct callouts highlighting scope, pull-through, and usage.",
+          "minItems": 3,
+          "maxItems": 5,
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "scope": {
+      "type": "object",
+      "description": "Audit trail and evidence scope for the metastudy.",
+      "required": [
+        "subject",
+        "population",
+        "timeHorizon",
+        "totalStudies",
+        "studyDesignMix",
+        "evidenceClasses"
+      ],
+      "properties": {
+        "subject": {
+          "type": "string",
+          "description": "Narrow topic definition for the metastudy."
+        },
+        "population": {
+          "type": "string",
+          "description": "Population characteristics represented in the corpus."
+        },
+        "timeHorizon": {
+          "type": "string",
+          "description": "Date range covered by the included studies (e.g., 2016-2024)."
+        },
+        "totalStudies": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total number of studies captured in the metastudy analysis."
+        },
+        "studyDesignMix": {
+          "type": "array",
+          "description": "Mix of study designs with counts (e.g., RCT, observational).",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["design", "count"],
+            "properties": {
+              "design": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "evidenceClasses": {
+          "type": "array",
+          "description": "Quality classification buckets derived from the pipeline.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["label", "studies"],
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "Quality class label (e.g., High, Moderate, Emerging)."
+              },
+              "criteria": {
+                "type": "string",
+                "description": "Definition or heuristics for the class."
+              },
+              "studies": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Number of studies assigned to this class."
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "synthesis": {
+      "type": "object",
+      "description": "Core narrative elements used by downstream consumers.",
+      "required": [
+        "executiveSummary",
+        "mechanismHighlights",
+        "marketReadiness",
+        "recommendations"
+      ],
+      "properties": {
+        "executiveSummary": {
+          "type": "string",
+          "description": "Three-sentence overview of the metastudy’s main finding.",
+          "maxLength": 800
+        },
+        "mechanismHighlights": {
+          "type": "array",
+          "description": "Top mechanistic insights (neurological, endocrine, behavioral).",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["mechanism", "evidence"],
+            "properties": {
+              "mechanism": { "type": "string" },
+              "evidence": { "type": "string" },
+              "confidence": {
+                "type": "string",
+                "enum": ["strong", "moderate", "emerging", "speculative"],
+                "description": "Qualitative confidence band."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "marketReadiness": {
+          "type": "array",
+          "description": "Signals covering formulation maturity, regulatory posture, and safety.",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["dimension", "signal"],
+            "properties": {
+              "dimension": {
+                "type": "string",
+                "enum": ["formulation", "regulatory", "safety", "supply", "clinical"],
+                "description": "Category of readiness."
+              },
+              "signal": {
+                "type": "string",
+                "description": "Concise summary (≤ 40 words)."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "recommendations": {
+          "type": "array",
+          "description": "Actionable next steps for experiments or diligence.",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["priority", "action"],
+            "properties": {
+              "priority": {
+                "type": "string",
+                "enum": ["immediate", "short-term", "long-term"]
+              },
+              "action": {
+                "type": "string",
+                "description": "Recommended step with desired outcome."
+              },
+              "owner": {
+                "type": "string",
+                "description": "Suggested stakeholder (optional)."
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "description": "Structured evidence tables reused across views.",
+      "required": ["endpoints", "keyStudies"],
+      "properties": {
+        "endpoints": {
+          "type": "array",
+          "description": "Quantitative metrics (effect sizes, confidence intervals) across attention endpoints.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["endpoint", "metric", "value"],
+            "properties": {
+              "endpoint": {
+                "type": "string",
+                "description": "Outcome measure (e.g., sustained attention, working memory)."
+              },
+              "metric": {
+                "type": "string",
+                "description": "Statistic computed (e.g., Hedges g, RR)."
+              },
+              "value": {
+                "type": "number",
+                "description": "Point estimate of the metric."
+              },
+              "ciLower": {
+                "type": "number",
+                "description": "Lower bound of 95% CI if available."
+              },
+              "ciUpper": {
+                "type": "number",
+                "description": "Upper bound of 95% CI if available."
+              },
+              "studyCount": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "interpretation": {
+                "type": "string",
+                "description": "Plain-language interpretation of the effect."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "keyStudies": {
+          "type": "array",
+          "description": "Curated list of pivotal studies feeding the metastudy summary.",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["title", "year", "design", "summary"],
+            "properties": {
+              "title": { "type": "string" },
+              "authors": { "type": "string" },
+              "year": { "type": "integer" },
+              "design": { "type": "string" },
+              "link": {
+                "type": "string",
+                "format": "uri-reference"
+              },
+              "summary": {
+                "type": "string",
+                "description": "≤ 60 word abstract of the study’s contribution."
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "methodology": {
+      "type": "object",
+      "description": "Provenance of the metastudy pipeline execution.",
+      "required": ["workflowVersion", "cutoffDate", "filters"],
+      "properties": {
+        "workflowVersion": {
+          "type": "string",
+          "description": "Identifier for the pipeline run that generated this metastudy."
+        },
+        "cutoffDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Last date for included evidence."
+        },
+        "filters": {
+          "type": "array",
+          "description": "Applied inclusion/exclusion filters for the literature search.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional methodological caveats."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
