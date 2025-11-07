@@ -1,8 +1,29 @@
+const DEFAULT_METASTUDY = {
+  title: "Metastudy • ADHD Focus Evidence Backbone",
+  copy: [
+    "**Scope:** 42 trials spanning CBT, pharmacological, and integrative ADHD interventions.",
+    "**Pull-through:** Extracted effect sizes for sustained attention, working memory, and executive control.",
+    "**Usage:** Anchors Terpedia’s evidence grading rubric for ADHD-focused product concepts.",
+  ].join("\n"),
+  link: "https://terpedia.com/research/adhd-focus-metastudy",
+  cta: "Open ADHD Metastudy",
+};
+
+const DEFAULT_TERP_STUDY = {
+  title: "Targeted Study • Terpene Synergy for ADHD",
+  copy: [
+    "**Design:** 12-week pilot comparing terpene-rich formulations vs. placebo in adult ADHD cohorts.",
+    "**Highlights:** Correlated linalool/pinene ratios with n-back performance and EEG biomarkers.",
+    "**Next:** Supplies formulation SOPs and regulatory notes for rapid product iteration.",
+  ].join("\n"),
+  link: "https://terpedia.com/research/terpenes-adhd-focus-trial",
+  cta: "View Terpene Study Dossier",
+};
 const canvas = document.getElementById("canvas");
 const newFlowButton = document.getElementById("new-flow-button");
 
 const flows = [];
-const lines = [];
+let jsPlumbInstance = null;
 
 const COLOR_LINE = getComputedStyle(document.documentElement)
   .getPropertyValue("--line")
@@ -51,6 +72,63 @@ const cloneDeep = (value) => JSON.parse(JSON.stringify(value));
 const formatPaperLabel = (paper, index) =>
   paper.shortLabel ||
   `${paper.journal ? paper.journal.split(" ")[0] : "Paper"} ${index + 1}`;
+
+const renderMarkdown = (element, markdown) => {
+  if (
+    typeof window !== "undefined" &&
+    window.marked &&
+    typeof window.marked.parse === "function"
+  ) {
+    element.innerHTML = window.marked.parse(markdown);
+  } else {
+    element.textContent = markdown;
+  }
+};
+
+const ensureJsPlumbInstance = () => {
+  if (jsPlumbInstance) return jsPlumbInstance;
+  const global = typeof window !== "undefined" ? window : undefined;
+  if (!global || !global.jsPlumb) {
+    console.warn("jsPlumb is not available on window");
+    return null;
+  }
+
+  jsPlumbInstance = global.jsPlumb.getInstance({
+    container: canvas,
+  });
+
+  jsPlumbInstance.importDefaults({
+    Connector: ["Flowchart", { cornerRadius: 14, stub: 24 }],
+    ConnectionsDetachable: false,
+    ReattachConnections: true,
+    Endpoint: ["Blank", {}],
+    PaintStyle: { stroke: COLOR_LINE, strokeWidth: 2.4 },
+    HoverPaintStyle: { stroke: "rgba(125, 211, 252, 0.9)", strokeWidth: 2.8 },
+    ConnectionOverlays: [
+      [
+        "Arrow",
+        {
+          location: 1,
+          width: 12,
+          length: 12,
+          foldback: 0.8,
+          paintStyle: { fill: COLOR_LINE, strokeWidth: 0 },
+        },
+      ],
+    ],
+  });
+
+  return jsPlumbInstance;
+};
+
+const ensureCanvasHeight = (requiredHeight) => {
+  if (!canvas) return;
+  const current = parseFloat(canvas.dataset.minHeight || canvas.style.minHeight || "0") || 0;
+  if (current < requiredHeight) {
+    canvas.style.minHeight = `${requiredHeight}px`;
+    canvas.dataset.minHeight = String(requiredHeight);
+  }
+};
 
 const getTopTerms = (abstracts, limit = 8) => {
   const frequencies = new Map();
@@ -131,9 +209,8 @@ const createNodeShell = ({ id, label, title, x, y }) => {
   const node = document.createElement("section");
   node.className = "node";
   node.id = id;
-  node.dataset.x = String(x);
-  node.dataset.y = String(y);
-  node.style.transform = `translate(${x}px, ${y}px)`;
+  node.style.left = `${x}px`;
+  node.style.top = `${y}px`;
 
   if (label || title) {
     const header = document.createElement("header");
@@ -161,40 +238,26 @@ const createNodeShell = ({ id, label, title, x, y }) => {
   node.append(body);
 
   canvas.append(node);
+  const instance = ensureJsPlumbInstance();
+  if (instance) {
+    instance.draggable(node, {
+      containment: true,
+      grid: [20, 20],
+    });
+  }
+
   return { node, body };
 };
 
 const connectNodes = (fromId, toId) => {
-  const from = document.getElementById(fromId);
-  const to = document.getElementById(toId);
-  if (!from || !to || typeof LeaderLine === "undefined") return;
+  const instance = ensureJsPlumbInstance();
+  if (!instance) return;
 
-  const line = new LeaderLine(from, to, {
-    color: COLOR_LINE,
-    size: 2.4,
-    path: "magnet",
-    startSocket: "bottom",
-    endSocket: "top",
-    startPlug: "disc",
-    endPlug: "arrow3",
-    endPlugSize: 2.6,
-    gradient: true,
-    dash: { animation: true },
+  instance.connect({
+    source: fromId,
+    target: toId,
+    anchors: ["Bottom", "Top"],
   });
-
-  lines.push({ fromId, toId, line });
-};
-
-const updateLinesForNode = (nodeId) => {
-  lines.forEach((entry) => {
-    if (entry.fromId === nodeId || entry.toId === nodeId) {
-      entry.line.position();
-    }
-  });
-};
-
-const updateAllLines = () => {
-  lines.forEach((entry) => entry.line.position());
 };
 
 /**
@@ -254,17 +317,11 @@ const buildLLMNode = ({ id, position, flow }) => {
     y: position.y,
   });
 
-  const paragraphs = buildLLMAnswer(flow.question, flow.papers)
-    .split("\n\n")
-    .map((chunk) => chunk.trim())
-    .filter(Boolean);
-
-  paragraphs.forEach((chunk) => {
-    const paragraph = document.createElement("p");
-    paragraph.textContent = chunk;
+  const markdown = buildLLMAnswer(flow.question, flow.papers);
+  renderMarkdown(body, markdown);
+  body.querySelectorAll("p").forEach((paragraph) => {
     paragraph.style.marginBottom = "0.9rem";
     paragraph.style.color = "var(--text-secondary)";
-    body.append(paragraph);
   });
 
   return node;
@@ -304,16 +361,57 @@ const buildEvidenceNode = ({ id, position, flow }) => {
     meta.style.marginBottom = "0.35rem";
     meta.style.color = "rgba(148, 163, 184, 0.75)";
 
-    const summary = document.createElement("p");
-    summary.textContent = paper.summary;
-    summary.style.margin = 0;
+    const summary = document.createElement("div");
+    renderMarkdown(summary, paper.summary || "");
+    summary.style.margin = "0";
     summary.style.fontSize = "0.9rem";
+    summary.querySelectorAll("p").forEach((paragraph) => {
+      paragraph.style.margin = "0";
+      paragraph.style.color = "var(--text-secondary)";
+    });
 
     item.append(title, meta, summary);
     list.append(item);
   });
 
   body.append(list);
+  return node;
+};
+
+const buildArtifactNode = ({ id, position, artifact }) => {
+  const details = {
+    title: artifact?.title || "Artifact",
+    copy: artifact?.copy || "_Pending_: Integrate evidence artifact summary.",
+    link: artifact?.link || "#",
+    cta: artifact?.cta || "Review Artifact",
+  };
+
+  const { node, body } = createNodeShell({
+    id,
+    label: "Artifact",
+    title: details.title,
+    x: position.x,
+    y: position.y,
+  });
+
+  const description = document.createElement("div");
+  renderMarkdown(description, details.copy);
+  description.style.fontSize = "0.92rem";
+  description.style.lineHeight = "1.65";
+  description.style.color = "var(--text-secondary)";
+
+  const action = document.createElement("a");
+  action.className = "artifact__link";
+  action.href = details.link;
+  if (details.link && details.link !== "#") {
+    action.target = "_blank";
+    action.rel = "noopener noreferrer";
+  } else {
+    action.setAttribute("role", "button");
+  }
+  action.textContent = details.cta;
+
+  body.append(description, action);
   return node;
 };
 
@@ -341,12 +439,16 @@ const buildAbstractTabsNode = ({ id, position, flow }) => {
     heading.style.marginBottom = "0.45rem";
     heading.style.color = "var(--text)";
 
-    const abstract = document.createElement("p");
-    abstract.textContent = paper.abstract;
-    abstract.style.margin = 0;
+    const abstract = document.createElement("div");
+    renderMarkdown(abstract, paper.abstract);
+    abstract.style.margin = "0";
     abstract.style.color = "var(--text-secondary)";
     abstract.style.fontSize = "0.92rem";
     abstract.style.lineHeight = "1.6";
+    abstract.querySelectorAll("p").forEach((paragraph) => {
+      paragraph.style.marginTop = "0";
+      paragraph.style.marginBottom = "0.75rem";
+    });
 
     panel.append(heading, abstract);
   };
@@ -448,66 +550,96 @@ const createInquiryFlow = (flow, index = flows.length) => {
     insights: { x: columnLeftX, y: 40 + yOffset + verticalSpacing },
     evidence: { x: columnRightX, y: 40 + yOffset },
     abstracts: { x: columnRightX, y: 40 + yOffset + verticalSpacing },
+    metastudy: { x: columnMiddleX, y: 40 + yOffset + verticalSpacing * 2 },
+    terpStudy: { x: columnMiddleX, y: 40 + yOffset + verticalSpacing * 3 },
   };
 
   const flowRecord = { id: flowId, data: flow, nodes: {} };
   flows.push(flowRecord);
 
-  const questionNode = buildQuestionNode({
-    id: `${flowId}-question`,
-    position: layout.question,
-    flow,
-    onQuestionChange: (value) => {
-      flowRecord.data.question = value;
-      refreshPrompt(flowId);
-      refreshLLM(flowId);
-    },
-  });
+  const instance = ensureJsPlumbInstance();
+  const buildFlow = () => {
+    const questionNode = buildQuestionNode({
+      id: `${flowId}-question`,
+      position: layout.question,
+      flow,
+      onQuestionChange: (value) => {
+        flowRecord.data.question = value;
+        refreshPrompt(flowId);
+        refreshLLM(flowId);
+      },
+    });
 
-  const promptNode = buildPromptNode({
-    id: `${flowId}-prompt`,
-    position: layout.prompt,
-    flow,
-  });
+    const promptNode = buildPromptNode({
+      id: `${flowId}-prompt`,
+      position: layout.prompt,
+      flow,
+    });
 
-  const answerNode = buildLLMNode({
-    id: `${flowId}-answer`,
-    position: layout.answer,
-    flow,
-  });
+    const answerNode = buildLLMNode({
+      id: `${flowId}-answer`,
+      position: layout.answer,
+      flow,
+    });
 
-  const evidenceNode = buildEvidenceNode({
-    id: `${flowId}-evidence`,
-    position: layout.evidence,
-    flow,
-  });
+    const evidenceNode = buildEvidenceNode({
+      id: `${flowId}-evidence`,
+      position: layout.evidence,
+      flow,
+    });
 
-  const abstractsNode = buildAbstractTabsNode({
-    id: `${flowId}-abstracts`,
-    position: layout.abstracts,
-    flow,
-  });
+    const abstractsNode = buildAbstractTabsNode({
+      id: `${flowId}-abstracts`,
+      position: layout.abstracts,
+      flow,
+    });
 
-  const insightsNode = buildInsightsNode({
-    id: `${flowId}-insights`,
-    position: layout.insights,
-    flow,
-  });
+    const insightsNode = buildInsightsNode({
+      id: `${flowId}-insights`,
+      position: layout.insights,
+      flow,
+    });
 
-  flowRecord.nodes = {
-    question: questionNode.id,
-    prompt: promptNode.id,
-    answer: answerNode.id,
-    evidence: evidenceNode.id,
-    abstracts: abstractsNode.id,
-    insights: insightsNode.id,
+    const metastudyNode = buildArtifactNode({
+      id: `${flowId}-metastudy`,
+      position: layout.metastudy,
+      artifact: flow.metastudy || DEFAULT_METASTUDY,
+    });
+
+    const terpStudyNode = buildArtifactNode({
+      id: `${flowId}-terp-study`,
+      position: layout.terpStudy,
+      artifact: flow.terpStudy || DEFAULT_TERP_STUDY,
+    });
+
+    flowRecord.nodes = {
+      question: questionNode.id,
+      prompt: promptNode.id,
+      answer: answerNode.id,
+      evidence: evidenceNode.id,
+      abstracts: abstractsNode.id,
+      insights: insightsNode.id,
+      metastudy: metastudyNode.id,
+      terpStudy: terpStudyNode.id,
+    };
+
+    connectNodes(questionNode.id, promptNode.id);
+    connectNodes(promptNode.id, answerNode.id);
+    connectNodes(answerNode.id, evidenceNode.id);
+    connectNodes(answerNode.id, metastudyNode.id);
+    connectNodes(answerNode.id, terpStudyNode.id);
+    connectNodes(evidenceNode.id, abstractsNode.id);
+    connectNodes(abstractsNode.id, insightsNode.id);
+
+    ensureCanvasHeight(layout.terpStudy.y + verticalSpacing * 2);
   };
 
-  connectNodes(questionNode.id, promptNode.id);
-  connectNodes(promptNode.id, answerNode.id);
-  connectNodes(answerNode.id, evidenceNode.id);
-  connectNodes(evidenceNode.id, abstractsNode.id);
-  connectNodes(abstractsNode.id, insightsNode.id);
+  if (instance) {
+    instance.batch(buildFlow);
+    instance.repaintEverything();
+  } else {
+    buildFlow();
+  }
 };
 
 const refreshPrompt = (flowId) => {
@@ -517,6 +649,9 @@ const refreshPrompt = (flowId) => {
   if (promptNode) {
     promptNode.textContent = buildPrompt(flowRecord.data.question);
   }
+  if (jsPlumbInstance) {
+    jsPlumbInstance.revalidate(flowRecord.nodes.prompt);
+  }
 };
 
 const refreshLLM = (flowId) => {
@@ -525,46 +660,16 @@ const refreshLLM = (flowId) => {
   const node = document.getElementById(flowRecord.nodes.answer);
   if (!node) return;
   const body = node.querySelector(".node__body");
-  body.innerHTML = "";
-  const paragraphs = buildLLMAnswer(flowRecord.data.question, flowRecord.data.papers)
-    .split("\n\n")
-    .map((chunk) => chunk.trim())
-    .filter(Boolean);
-
-  paragraphs.forEach((chunk) => {
-    const paragraph = document.createElement("p");
-    paragraph.textContent = chunk;
+  const markdown = buildLLMAnswer(flowRecord.data.question, flowRecord.data.papers);
+  renderMarkdown(body, markdown);
+  body.querySelectorAll("p").forEach((paragraph) => {
     paragraph.style.marginBottom = "0.9rem";
     paragraph.style.color = "var(--text-secondary)";
-    body.append(paragraph);
   });
+  if (jsPlumbInstance) {
+    jsPlumbInstance.revalidate(flowRecord.nodes.answer);
+  }
 };
-
-/**
- * Interact.js configuration
- */
-interact(".node").draggable({
-  inertia: true,
-  listeners: {
-    move(event) {
-      const target = event.target;
-      const x = (parseFloat(target.dataset.x) || 0) + event.dx;
-      const y = (parseFloat(target.dataset.y) || 0) + event.dy;
-      target.dataset.x = String(x);
-      target.dataset.y = String(y);
-      target.style.transform = `translate(${x}px, ${y}px)`;
-      updateLinesForNode(target.id);
-    },
-    end(event) {
-      updateLinesForNode(event.target.id);
-    },
-  },
-});
-
-window.addEventListener("resize", () => {
-  clearTimeout(window.__resizeTimer);
-  window.__resizeTimer = setTimeout(() => updateAllLines(), 120);
-});
 
 /**
  * Demo data + boot
@@ -606,9 +711,20 @@ const INITIAL_FLOW = {
       shortLabel: "BCP Pilot",
     },
   ],
+  metastudy: DEFAULT_METASTUDY,
+  terpStudy: DEFAULT_TERP_STUDY,
 };
 
-createInquiryFlow(cloneDeep(INITIAL_FLOW), 0);
+const bootstrapWorkspace = () => {
+  ensureJsPlumbInstance();
+  createInquiryFlow(cloneDeep(INITIAL_FLOW), 0);
+};
+
+if (window.jsPlumb && typeof window.jsPlumb.ready === "function") {
+  window.jsPlumb.ready(bootstrapWorkspace);
+} else {
+  window.addEventListener("load", bootstrapWorkspace);
+}
 
 newFlowButton.addEventListener("click", () => {
   const question = window.prompt("What ADHD × terpene question should we explore next?");
@@ -617,10 +733,11 @@ newFlowButton.addEventListener("click", () => {
   const flowData = cloneDeep(INITIAL_FLOW);
   flowData.question = question.trim();
 
-  createInquiryFlow(flowData, flows.length);
-  requestAnimationFrame(() => updateAllLines());
-});
-
-window.addEventListener("load", () => {
-  requestAnimationFrame(() => updateAllLines());
+  const instance = ensureJsPlumbInstance();
+  if (instance) {
+    instance.batch(() => createInquiryFlow(flowData, flows.length));
+    instance.repaintEverything();
+  } else {
+    createInquiryFlow(flowData, flows.length);
+  }
 });
