@@ -13,63 +13,35 @@
     />
   </head>
   <body>
-    <header class="hero">
-      <div class="hero__content">
-        <p class="hero__eyebrow">Terpedia Research Pilot</p>
-        <h1 class="hero__title">Focus On Focus</h1>
-        <p class="hero__abstract">
-          Terpedia explores how terpene profiles intersect with attention and executive
-          function. This living dossier demonstrates a semi-autonomous workflow that
-          curates questions, drafts prompts, aggregates evidence, and distills market
-          opportunities—all in real time.
-        </p>
-        <button id="new-flow-button" class="hero__action" type="button">
-          + Ask a New Question
-        </button>
-      </div>
-    </header>
+    <main class="workspace workspace--lanes" id="workspace">
+      <header class="workspace__header">
+        <div class="workspace__heading">
+          <p class="workspace__eyebrow">Terpedia Inquiry Graph</p>
+          <h1 class="workspace__title">Focus On Focus</h1>
+        </div>
+        <div class="workspace__actions">
+          <button id="new-flow-button" class="workspace__action" type="button">
+            + Add Inquiry Lane
+          </button>
+        </div>
+      </header>
 
-    <main class="workspace" id="workspace">
-      <div id="canvas" class="canvas" role="region" aria-label="Inquiry workspace"></div>
-
-      <section class="market-hooks" aria-labelledby="market-hooks-heading">
-        <div class="market-card">
-          <p class="market-card__prompt">What is the optimal modality for delivery?</p>
-          <div class="market-card__overline">Evidence → Action</div>
-          <h2 id="market-hooks-heading" class="market-card__title">
-            Channel Hot Terpene Insights into a Pilot Product
-          </h2>
-          <p class="market-card__copy">
-            Terpedia’s ADHD Focus Kit packages vetted terpene formulations, sourcing guidance, and
-            compliance briefs. Leverage the research above to move from inquiry to in-market offering
-            without losing momentum.
-          </p>
-          <div class="market-card__cta">
-            <a
-              class="market-card__button"
-              href="https://terpedia.com/products/adhd-focus-kit"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Buy Now
-            </a>
-            <p class="market-card__disclaimer">
-              Early-access inventory ships within 14 days. Includes lab reports, packaging templates, and
-              marketing claims checklist.
-            </p>
+      <section class="workspace__board" aria-label="Inquiry workflow lanes">
+        <div id="canvas" class="canvas" role="region" aria-label="Three-lane inquiry workspace">
+          <div class="canvas__lanes" aria-hidden="true">
+            <div class="canvas__lane">
+              <span class="canvas__lane-label">Answers</span>
+            </div>
+            <div class="canvas__lane">
+              <span class="canvas__lane-label">Questions</span>
+            </div>
+            <div class="canvas__lane">
+              <span class="canvas__lane-label">Artifacts</span>
+            </div>
           </div>
         </div>
       </section>
     </main>
-
-    <footer class="footer">
-      <p>
-        Built by Terpedia to demonstrate inquiry-as-a-service. Explore more at
-        <a href="https://terpedia.com" target="_blank" rel="noopener noreferrer"
-          >terpedia.com</a
-        >.
-      </p>
-    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/2.15.6/js/jsplumb.min.js"></script>
