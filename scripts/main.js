@@ -172,7 +172,7 @@ const connectNodes = (fromId, toId) => {
   const line = new LeaderLine(from, to, {
     color: COLOR_LINE,
     size: 2.4,
-    path: "straight",
+    path: "magnet",
     startSocket: "bottom",
     endSocket: "top",
     startPlug: "disc",
@@ -439,16 +439,19 @@ const buildInsightsNode = ({ id, position, flow }) => {
  */
 const createInquiryFlow = (flow, index = flows.length) => {
   const flowId = uid("flow");
-  const yOffset = index * 1160;
-  const columnX = 48;
+  const yOffset = index * 720;
+  const columnSpacing = 360;
+  const columnLeftX = 48;
+  const columnMiddleX = columnLeftX + columnSpacing;
+  const columnRightX = columnMiddleX + columnSpacing;
   const verticalSpacing = 240;
   const layout = {
-    question: { x: columnX, y: 40 + yOffset },
-    prompt: { x: columnX, y: 40 + yOffset + verticalSpacing },
-    answer: { x: columnX, y: 40 + yOffset + verticalSpacing * 2 },
-    evidence: { x: columnX, y: 40 + yOffset + verticalSpacing * 3 },
-    abstracts: { x: columnX, y: 40 + yOffset + verticalSpacing * 4 },
-    insights: { x: columnX, y: 40 + yOffset + verticalSpacing * 5 },
+    question: { x: columnMiddleX, y: 40 + yOffset },
+    prompt: { x: columnMiddleX, y: 40 + yOffset + verticalSpacing },
+    answer: { x: columnLeftX, y: 40 + yOffset },
+    insights: { x: columnLeftX, y: 40 + yOffset + verticalSpacing },
+    evidence: { x: columnRightX, y: 40 + yOffset },
+    abstracts: { x: columnRightX, y: 40 + yOffset + verticalSpacing },
   };
 
   const flowRecord = { id: flowId, data: flow, nodes: {} };
