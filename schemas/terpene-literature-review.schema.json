@@ -10,7 +10,9 @@
     "evidenceSummary",
     "mechanisticMap",
     "gaps",
-    "references"
+    "references",
+    "htmlDocument",
+    "scholarMeta"
   ],
   "properties": {
     "query": {
@@ -288,6 +290,58 @@
               "notes": { "type": "string" }
             },
             "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "htmlDocument": {
+      "type": "string",
+      "description": "Full HTML document string for the literature review, ready for hosting with citation metadata."
+    },
+    "scholarMeta": {
+      "type": "object",
+      "description": "Metadata used to populate Google Scholar citation headers for the literature review.",
+      "required": ["title", "authors", "publicationDate", "venue", "abstract"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Citation title for Scholar meta tags."
+        },
+        "authors": {
+          "type": "array",
+          "description": "Ordered list of authors for citation meta tags.",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "publicationDate": {
+          "type": "string",
+          "description": "Publication date in ISO 8601 format."
+        },
+        "venue": {
+          "type": "string",
+          "description": "Journal or collection name surfaced in Scholar metadata."
+        },
+        "publisher": {
+          "type": "string",
+          "description": "Optional publishing organization."
+        },
+        "pdfUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Direct link to an accessible PDF artifact for Scholar ingestion."
+        },
+        "abstract": {
+          "type": "string",
+          "description": "Abstract summary used in citation meta tags."
+        },
+        "keywords": {
+          "type": "array",
+          "description": "Optional keyword terms surfaced via metadata headers.",
+          "items": {
+            "type": "string"
           }
         }
       },

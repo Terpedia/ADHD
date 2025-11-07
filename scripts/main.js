@@ -25,8 +25,43 @@ const canvas = document.getElementById("canvas");
 const newFlowButton = document.getElementById("new-flow-button");
 const badge = document.querySelector(".build-badge");
 
+const GRAPH_DEFINITION_URL = "./inquiry-graph.json";
+
 const flows = [];
 let jsPlumbInstance = null;
+let graphDefinition = null;
+let activeFlowId = null;
+const flowConnections = new Map();
+
+const updateFlowVisualState = (flowRecord, isActive) => {
+  if (!flowRecord) return;
+
+  Object.values(flowRecord.nodes || {}).forEach((nodeId) => {
+    const element = document.getElementById(nodeId);
+    if (element) {
+      element.classList.toggle("node--active", Boolean(isActive));
+    }
+  });
+
+  const connections = flowConnections.get(flowRecord.id);
+  if (connections) {
+    connections.forEach((connection) => {
+      if (!connection) return;
+      if (isActive) {
+        connection.addClass("flow-connection--active");
+      } else {
+        connection.removeClass("flow-connection--active");
+      }
+    });
+  }
+};
+
+const activateFlow = (flowId) => {
+  activeFlowId = flowId || null;
+  flows.forEach((flowRecord) => {
+    updateFlowVisualState(flowRecord, activeFlowId && flowRecord.id === activeFlowId);
+  });
+};
 
 const COLOR_LINE = getComputedStyle(document.documentElement)
   .getPropertyValue("--line")
@@ -551,7 +586,7 @@ const createNodeShell = ({ id, label, title, summary, x, y, lane }) => {
   });
 
   applySummary(defaultSummary);
-  setCollapsed(false);
+  setCollapsed(true);
 
   node.__setSummary = applySummary;
   node.__setCollapsed = setCollapsed;
@@ -599,7 +634,7 @@ const buildQuestionNode = ({ id, position, flow, onQuestionChange }) => {
 
   node.classList.add("node--question");
   setSummary(initialSummary);
-  setCollapsed(false);
+  setCollapsed(true);
 
   const input = document.createElement("input");
   input.type = "text";
@@ -678,7 +713,7 @@ const buildLLMNode = ({ id, position, flow }) => {
 const buildEvidenceNode = ({ id, position, flow }) => {
   const papers = getFlowPapers(flow);
   const summaryText = papers.length
-    ? `${papers.length} highlighted article${papers.length === 1 ? "" : "s"}`
+    ? truncateText(papers[0]?.title || `${papers.length} highlighted articles`, 120)
     : "No articles available yet";
   const { node, body, setSummary } = createNodeShell({
     id,
@@ -692,45 +727,149 @@ const buildEvidenceNode = ({ id, position, flow }) => {
   node.classList.add("node--artifact");
   setSummary(summaryText);
 
-  const list = document.createElement("ul");
-  list.className = "node__list";
+  const groups = Array.isArray(flow.paperClasses) && flow.paperClasses.length ? flow.paperClasses : null;
 
-  papers.forEach((paper) => {
-    const item = document.createElement("li");
-    item.className = "node__list-item";
+  const createDocDetails = (paper) => {
+    const docDetails = document.createElement("details");
+    docDetails.className = "evidence-doc";
 
-    const title = document.createElement("strong");
+    const docSummary = document.createElement("summary");
+    docSummary.className = "evidence-doc__summary";
+    docSummary.textContent = paper.title || "Untitled article";
+    docDetails.append(docSummary);
+
+    const docBody = document.createElement("div");
+    docBody.className = "evidence-doc__body";
+
+    if (paper.whatIsThisArticleAbout) {
+      const about = document.createElement("p");
+      about.className = "evidence-doc__about";
+      about.textContent = paper.whatIsThisArticleAbout;
+      docBody.append(about);
+    }
+
+    if (paper.journal || paper.year || paper.authors) {
+      const meta = document.createElement("p");
+      meta.className = "evidence-doc__meta";
+      meta.textContent = [paper.journal || "Journal", paper.year, paper.authors]
+        .filter(Boolean)
+        .join(" • ");
+      docBody.append(meta);
+    }
+
+    if (paper.summary) {
+      const summary = document.createElement("div");
+      summary.className = "evidence-doc__summary-text";
+      renderMarkdown(summary, paper.summary || "");
+      docBody.append(summary);
+    }
+
+    if (paper.abstract) {
+      const abstract = document.createElement("div");
+      abstract.className = "evidence-doc__abstract";
+      renderMarkdown(abstract, paper.abstract);
+      docBody.append(abstract);
+    }
+
+    if (paper.fullText) {
+      const fullTextDetails = document.createElement("details");
+      fullTextDetails.className = "evidence-doc__fulltext";
+
+      const fullTextSummary = document.createElement("summary");
+      fullTextSummary.textContent = "View full text";
+      fullTextDetails.append(fullTextSummary);
+
+      const fullTextBody = document.createElement("div");
+      fullTextBody.className = "evidence-doc__fulltext-body";
+      renderMarkdown(fullTextBody, paper.fullText);
+      fullTextDetails.append(fullTextBody);
+
+      docBody.append(fullTextDetails);
+    }
+
     if (paper.link) {
       const link = document.createElement("a");
+      link.className = "evidence-doc__link";
       link.href = paper.link;
       link.target = "_blank";
       link.rel = "noopener noreferrer";
-      link.textContent = paper.title;
-      title.append(link);
-    } else {
-      title.textContent = paper.title;
+      link.textContent = "Open source";
+      docBody.append(link);
     }
 
-    const meta = document.createElement("small");
-    meta.textContent = `${paper.journal || "Journal"} · ${paper.year || "2024"}`;
-    meta.style.display = "block";
-    meta.style.marginBottom = "0.35rem";
-    meta.style.color = "rgba(148, 163, 184, 0.75)";
+    docDetails.append(docBody);
 
-    const summary = document.createElement("div");
-    renderMarkdown(summary, paper.summary || "");
-    summary.style.margin = "0";
-    summary.style.fontSize = "0.9rem";
-    summary.querySelectorAll("p").forEach((paragraph) => {
-      paragraph.style.margin = "0";
-      paragraph.style.color = "var(--text-secondary)";
+    docDetails.addEventListener("toggle", () => {
+      if (jsPlumbInstance) {
+        jsPlumbInstance.revalidate(node);
+      }
+      scheduleLayout();
     });
 
-    item.append(title, meta, summary);
-    list.append(item);
-  });
+    return docDetails;
+  };
 
-  body.append(list);
+  if (groups) {
+    const container = document.createElement("div");
+    container.className = "evidence-groups";
+
+    groups.forEach((group) => {
+      const groupDetails = document.createElement("details");
+      groupDetails.className = "evidence-group";
+
+      const groupSummary = document.createElement("summary");
+      groupSummary.className = "evidence-group__summary";
+
+      const label = document.createElement("span");
+      label.className = "evidence-group__label";
+      label.textContent = group.label || "Class";
+      groupSummary.append(label);
+
+      const count = document.createElement("span");
+      count.className = "evidence-group__count";
+      const total = Array.isArray(group.documents) ? group.documents.length : 0;
+      count.textContent = `${total} ${total === 1 ? "article" : "articles"}`;
+      groupSummary.append(count);
+
+      groupDetails.append(groupSummary);
+
+      if (group.description) {
+        const desc = document.createElement("p");
+        desc.className = "evidence-group__description";
+        desc.textContent = group.description;
+        groupDetails.append(desc);
+      }
+
+      const docsContainer = document.createElement("div");
+      docsContainer.className = "evidence-documents";
+      (group.documents || []).forEach((paper) => {
+        docsContainer.append(createDocDetails(paper));
+      });
+
+      groupDetails.append(docsContainer);
+
+      groupDetails.addEventListener("toggle", () => {
+        if (jsPlumbInstance) {
+          jsPlumbInstance.revalidate(node);
+        }
+        scheduleLayout();
+      });
+
+      container.append(groupDetails);
+    });
+
+    body.append(container);
+  } else {
+    const docsContainer = document.createElement("div");
+    docsContainer.className = "evidence-documents";
+
+    papers.forEach((paper) => {
+      docsContainer.append(createDocDetails(paper));
+    });
+
+    body.append(docsContainer);
+  }
+
   return node;
 };
 

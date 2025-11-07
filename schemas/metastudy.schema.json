@@ -4,7 +4,7 @@
   "title": "MetastudyOutput",
   "description": "Structured output specification for the metastudy artifact rendered in the inquiry canvas.",
   "type": "object",
-  "required": ["title", "copy", "cta", "link", "display", "scope"],
+  "required": ["title", "copy", "cta", "link", "display", "scope", "htmlDocument", "scholarMeta"],
   "properties": {
     "title": {
       "type": "string",
@@ -303,5 +303,57 @@
       "additionalProperties": false
     }
   },
+    "htmlDocument": {
+      "type": "string",
+      "description": "Fully rendered HTML document string for the metastudy artifact, including <head> and <body> tags."
+    },
+    "scholarMeta": {
+      "type": "object",
+      "description": "Metadata used to populate Google Scholar citation headers.",
+      "required": ["title", "authors", "publicationDate", "venue", "abstract"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Citation title for Scholar meta tags."
+        },
+        "authors": {
+          "type": "array",
+          "description": "Ordered list of authors for citation meta tags.",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "publicationDate": {
+          "type": "string",
+          "description": "Publication date in ISO 8601 format used for metadata tags."
+        },
+        "venue": {
+          "type": "string",
+          "description": "Journal or collection name surfaced in Scholar metadata."
+        },
+        "publisher": {
+          "type": "string",
+          "description": "Optional publishing organization or imprint."
+        },
+        "pdfUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Direct link to downloadable PDF for Scholar ingestion."
+        },
+        "abstract": {
+          "type": "string",
+          "description": "Abstract summary used for citation meta tags."
+        },
+        "keywords": {
+          "type": "array",
+          "description": "Optional keywords to expose via metadata headers.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
   "additionalProperties": false
 }
