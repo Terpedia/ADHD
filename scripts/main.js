@@ -172,9 +172,9 @@ const connectNodes = (fromId, toId) => {
   const line = new LeaderLine(from, to, {
     color: COLOR_LINE,
     size: 2.4,
-    path: "grid",
-    startSocket: "right",
-    endSocket: "left",
+    path: "straight",
+    startSocket: "bottom",
+    endSocket: "top",
     startPlug: "disc",
     endPlug: "arrow3",
     endPlugSize: 2.6,
@@ -439,14 +439,16 @@ const buildInsightsNode = ({ id, position, flow }) => {
  */
 const createInquiryFlow = (flow, index = flows.length) => {
   const flowId = uid("flow");
-  const yOffset = index * 360;
+  const yOffset = index * 1160;
+  const columnX = 48;
+  const verticalSpacing = 240;
   const layout = {
-    question: { x: 40, y: 40 + yOffset },
-    prompt: { x: 420, y: 40 + yOffset },
-    answer: { x: 800, y: 40 + yOffset },
-    evidence: { x: 800, y: 320 + yOffset },
-    abstracts: { x: 420, y: 320 + yOffset },
-    insights: { x: 40, y: 320 + yOffset },
+    question: { x: columnX, y: 40 + yOffset },
+    prompt: { x: columnX, y: 40 + yOffset + verticalSpacing },
+    answer: { x: columnX, y: 40 + yOffset + verticalSpacing * 2 },
+    evidence: { x: columnX, y: 40 + yOffset + verticalSpacing * 3 },
+    abstracts: { x: columnX, y: 40 + yOffset + verticalSpacing * 4 },
+    insights: { x: columnX, y: 40 + yOffset + verticalSpacing * 5 },
   };
 
   const flowRecord = { id: flowId, data: flow, nodes: {} };
