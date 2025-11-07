@@ -212,11 +212,31 @@ const getLaneCenterX = (laneName) => {
 };
 
 const alignNodeToLane = (node, laneName) => {
-  if (!laneName) return;
-  const centerX = getLaneCenterX(laneName);
-  if (centerX == null) return;
-  const width = node.offsetWidth || parseFloat(getComputedStyle(node).width) || 320;
-  const position = Math.max(0, centerX - width / 2);
+  if (!laneName || !canvas) return;
+
+  const lanes = canvas.querySelectorAll(".canvas__lane");
+  const laneIndex = LANE_INDEX[laneName];
+  const lane = lanes && lanes[laneIndex];
+  if (!lane) return;
+
+  const canvasRect = canvas.getBoundingClientRect();
+  const laneRect = lane.getBoundingClientRect();
+  const centerX = laneRect.left - canvasRect.left + laneRect.width / 2;
+  const laneWidth = laneRect.width;
+
+  const computed = getComputedStyle(node);
+  const currentWidth = node.offsetWidth || parseFloat(computed.width) || laneWidth;
+  const gutter = 32;
+  const maxWidth = Math.max(160, laneWidth - gutter);
+  const targetWidth = Math.min(currentWidth, maxWidth);
+
+  if (!Number.isNaN(targetWidth) && targetWidth > 0) {
+    node.style.maxWidth = `${maxWidth}px`;
+    node.style.width = `${targetWidth}px`;
+  }
+
+  const finalWidth = node.offsetWidth || targetWidth;
+  const position = Math.max(0, centerX - finalWidth / 2);
   node.style.left = `${position}px`;
 };
 
@@ -458,20 +478,7 @@ const createNodeShell = ({ id, label, title, x, y, lane }) => {
   node.append(body);
 
   canvas.append(node);
-  const instance = ensureJsPlumbInstance();
-  if (instance) {
-    instance.manage(node);
-    instance.makeSource(node, {
-      filter: ".node__header, .node__body",
-      anchor: "BottomCenter",
-      allowLoopback: false,
-    });
-    instance.makeTarget(node, {
-      anchor: "TopCenter",
-      allowLoopback: false,
-    });
-  }
-
+  ensureJsPlumbInstance();
   alignNodeToLane(node, lane);
   if (jsPlumbInstance) {
     jsPlumbInstance.revalidate(node);

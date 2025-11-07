@@ -297,9 +297,9 @@ a:hover {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  min-width: var(--node-width);
-  max-width: 620px;
-  width: clamp(var(--node-width), 28vw, 520px);
+  min-width: 160px;
+  max-width: 100%;
+  width: clamp(260px, 28vw, 520px);
   min-height: 180px;
   background: linear-gradient(145deg, rgba(17, 28, 52, 0.95), rgba(15, 23, 42, 0.85));
   border-radius: var(--radius-md);
