@@ -203,31 +203,27 @@ const updateAllLines = () => {
 const buildQuestionNode = ({ id, position, flow, onQuestionChange }) => {
   const { node, body } = createNodeShell({
     id,
-    label: "Input",
-    title: "Research Question",
+    label: null,
+    title: null,
     x: position.x,
     y: position.y,
   });
 
-  const prompt = document.createElement("label");
-  prompt.textContent = "What inquiry should we pursue?";
-  prompt.style.display = "block";
-  prompt.style.fontWeight = "500";
-  prompt.style.color = "var(--text)";
+  node.classList.add("node--question");
 
   const input = document.createElement("input");
   input.type = "text";
   input.className = "node__input";
   input.value = flow.question;
-  input.placeholder = "Formulate a terpene-focused ADHD hypothesis...";
-  input.setAttribute("aria-label", "Research question");
+  input.placeholder = "Pose your terpene × ADHD question...";
+  input.setAttribute("aria-label", "Research question input");
 
   input.addEventListener("input", (event) => {
     const value = event.target.value.trim();
     onQuestionChange(value.length ? value : flow.question);
   });
 
-  body.append(prompt, input);
+  body.append(input);
   return node;
 };
 
