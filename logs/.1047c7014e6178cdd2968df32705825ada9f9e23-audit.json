@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/danielmcshan/GitHub/ADHD/logs/.1047c7014e6178cdd2968df32705825ada9f9e23-audit.json",
+    "files": [
+        {
+            "date": 1762545304827,
+            "name": "/Users/danielmcshan/GitHub/ADHD/logs/mcp-puppeteer-2025-11-07.log",
+            "hash": "748b72d8adf8f48217ab0311f09a697673d5c1ec93c75d35c7812451b78f8e1e"
+        }
+    ],
+    "hashType": "sha256"
+}

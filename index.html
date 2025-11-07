@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Focus On Focus | Terpedia ADHD Inquiry</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <p class="hero__eyebrow">Terpedia Research Pilot</p>
+        <h1 class="hero__title">Focus On Focus</h1>
+        <p class="hero__abstract">
+          Terpedia explores how terpene profiles intersect with attention and executive
+          function. This living dossier demonstrates a semi-autonomous workflow that
+          curates questions, drafts prompts, aggregates evidence, and distills market
+          opportunities—all in real time.
+        </p>
+        <button id="new-flow-button" class="hero__action" type="button">
+          + Ask a New Question
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace" id="workspace">
+      <div id="canvas" class="canvas" role="region" aria-label="Inquiry workspace"></div>
+    </main>
+
+    <footer class="footer">
+      <p>
+        Built by Terpedia to demonstrate inquiry-as-a-service. Explore more at
+        <a href="https://terpedia.com" target="_blank" rel="noopener noreferrer"
+          >terpedia.com</a
+        >.
+      </p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leader-line@1.0.7/leader-line.min.js"></script>
+    <script type="module" src="scripts/main.js"></script>
+  </body>
+</html>
