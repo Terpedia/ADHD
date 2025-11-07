@@ -12,7 +12,12 @@
       rel="stylesheet"
     />
   </head>
-  <body>
+  <body data-commit-label="" data-commit-branch="main">
+    <div class="build-badge" role="status" aria-live="polite">
+      <span class="build-badge__commit" data-role="commit-label">Syncing commit…</span>
+      <span class="build-badge__separator">•</span>
+      <span class="build-badge__time" data-role="timestamp">--:--</span>
+    </div>
     <main class="workspace workspace--lanes" id="workspace">
       <header class="workspace__header">
         <div class="workspace__heading">

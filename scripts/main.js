@@ -7,6 +7,7 @@ const DEFAULT_METASTUDY = {
   ].join("\n"),
   link: "https://terpedia.com/research/adhd-focus-metastudy",
   cta: "Open ADHD Metastudy",
+  type: "markdown",
 };
 
 const DEFAULT_TERP_STUDY = {
@@ -18,9 +19,11 @@ const DEFAULT_TERP_STUDY = {
   ].join("\n"),
   link: "https://terpedia.com/research/terpenes-adhd-focus-trial",
   cta: "View Terpene Study Dossier",
+  type: "markdown",
 };
 const canvas = document.getElementById("canvas");
 const newFlowButton = document.getElementById("new-flow-button");
+const badge = document.querySelector(".build-badge");
 
 const flows = [];
 let jsPlumbInstance = null;
@@ -28,6 +31,12 @@ let jsPlumbInstance = null;
 const COLOR_LINE = getComputedStyle(document.documentElement)
   .getPropertyValue("--line")
   .trim();
+const BODY_DATASET = document.body.dataset || {};
+const LANE_INDEX = {
+  answers: 0,
+  questions: 1,
+  artifacts: 2,
+};
 
 const STOP_WORDS = new Set(
   [
@@ -73,16 +82,55 @@ const formatPaperLabel = (paper, index) =>
   paper.shortLabel ||
   `${paper.journal ? paper.journal.split(" ")[0] : "Paper"} ${index + 1}`;
 
-const renderMarkdown = (element, markdown) => {
+const renderMarkdown = (element, markdown, options = {}) => {
+  const { enableKroki = false } = options;
+  let content = markdown;
+
+  const placeholders = [];
+
+  if (enableKroki) {
+    content = markdown.replace(/```kroki-([a-z0-9-]+)\s+([\s\S]*?)```/gi, (_, type, body) => {
+      const source = body.trim();
+      const id = uid("kroki");
+      placeholders.push({ id, type, source });
+      return `<div class="kroki-diagram" data-kroki-id="${id}"><span class="kroki-diagram__loading">Rendering ${type}…</span></div>`;
+    });
+  }
+
   if (
     typeof window !== "undefined" &&
     window.marked &&
     typeof window.marked.parse === "function"
   ) {
-    element.innerHTML = window.marked.parse(markdown);
+    element.innerHTML = window.marked.parse(content);
   } else {
-    element.textContent = markdown;
+    element.textContent = content;
+    return;
   }
+
+  if (!enableKroki || !placeholders.length) return;
+
+  placeholders.forEach(async ({ id, type, source }) => {
+    const target = element.querySelector(`[data-kroki-id="${id}"]`);
+    if (!target) return;
+    try {
+      const response = await fetch(`https://kroki.io/${type}/svg`, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: source,
+      });
+      if (!response.ok) {
+        throw new Error(`Kroki request failed with status ${response.status}`);
+      }
+      const svg = await response.text();
+      target.innerHTML = svg;
+      target.classList.add("kroki-diagram--ready");
+    } catch (error) {
+      console.error("Failed to render Kroki diagram:", error);
+      target.innerHTML = `<span class="kroki-diagram__error">Diagram unavailable</span>`;
+      target.classList.add("kroki-diagram--error");
+    }
+  });
 };
 
 const ensureJsPlumbInstance = () => {
@@ -128,6 +176,73 @@ const ensureCanvasHeight = (requiredHeight) => {
     canvas.style.minHeight = `${requiredHeight}px`;
     canvas.dataset.minHeight = String(requiredHeight);
   }
+};
+
+const getLaneCenterX = (laneName) => {
+  if (!canvas) return null;
+  const lanes = canvas.querySelectorAll(".canvas__lane");
+  const index = LANE_INDEX[laneName];
+  if (!lanes || !lanes[index]) return null;
+  const laneRect = lanes[index].getBoundingClientRect();
+  const canvasRect = canvas.getBoundingClientRect();
+  return laneRect.left - canvasRect.left + laneRect.width / 2;
+};
+
+const alignNodeToLane = (node, laneName) => {
+  if (!laneName) return;
+  const centerX = getLaneCenterX(laneName);
+  if (centerX == null) return;
+  const width = node.offsetWidth || parseFloat(getComputedStyle(node).width) || 320;
+  const position = Math.max(0, centerX - width / 2);
+  node.style.left = `${position}px`;
+};
+
+const NODE_RESIZE_OBSERVER =
+  typeof ResizeObserver !== "undefined"
+    ? new ResizeObserver((entries) => {
+        entries.forEach(({ target }) => {
+          if (!target.isConnected) return;
+          const lane = target.dataset?.lane;
+          if (lane) alignNodeToLane(target, lane);
+          if (jsPlumbInstance) {
+            jsPlumbInstance.revalidate(target);
+          }
+        });
+      })
+    : null;
+
+const registerNodeForResize = (node) => {
+  if (NODE_RESIZE_OBSERVER) {
+    NODE_RESIZE_OBSERVER.observe(node);
+  }
+};
+
+const updateBadgeTimestamp = () => {
+  if (!badge) return;
+  const commitLabelTarget = badge.querySelector('[data-role="commit-label"]');
+  const timestampTarget = badge.querySelector('[data-role="timestamp"]');
+
+  const commitLabel = BODY_DATASET.commitLabel || "";
+  const commitBranch = BODY_DATASET.commitBranch || "";
+  const commitTime = BODY_DATASET.commitTime || "";
+  const deployTime = BODY_DATASET.deployTime || "";
+
+  if (commitLabelTarget) {
+    const label = commitBranch ? `${commitBranch}@${commitLabel}` : commitLabel || "Unknown commit";
+    commitLabelTarget.textContent = label;
+  }
+
+  if (timestampTarget) {
+    const parsedTime = commitTime ? new Date(commitTime) : null;
+    if (parsedTime && !Number.isNaN(parsedTime.getTime())) {
+      timestampTarget.textContent = parsedTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    } else {
+      timestampTarget.textContent = "--:--";
+    }
+  }
+
+  const isOutdated = deployTime && commitTime && new Date(deployTime) < new Date(commitTime);
+  badge.classList.toggle("is-outdated", Boolean(isOutdated));
 };
 
 const getTopTerms = (abstracts, limit = 8) => {
@@ -205,12 +320,15 @@ const buildLLMAnswer = (question, papers) => {
 /**
  * Node + line creation
  */
-const createNodeShell = ({ id, label, title, x, y }) => {
+const createNodeShell = ({ id, label, title, x, y, lane }) => {
   const node = document.createElement("section");
   node.className = "node";
   node.id = id;
   node.style.left = `${x}px`;
   node.style.top = `${y}px`;
+  if (lane) {
+    node.dataset.lane = lane;
+  }
 
   if (label || title) {
     const header = document.createElement("header");
@@ -243,8 +361,27 @@ const createNodeShell = ({ id, label, title, x, y }) => {
     instance.draggable(node, {
       containment: true,
       grid: [20, 20],
+      stop: (params) => {
+        const element = params?.el || node;
+        if (element) {
+          const laneName = element.dataset?.lane;
+          if (laneName) alignNodeToLane(element, laneName);
+          if (jsPlumbInstance) {
+            jsPlumbInstance.revalidate(element);
+          }
+        }
+      },
     });
   }
+
+  requestAnimationFrame(() => {
+    alignNodeToLane(node, lane);
+    if (jsPlumbInstance) {
+      jsPlumbInstance.revalidate(node);
+    }
+  });
+
+  registerNodeForResize(node);
 
   return { node, body };
 };
@@ -270,6 +407,7 @@ const buildQuestionNode = ({ id, position, flow, onQuestionChange }) => {
     title: null,
     x: position.x,
     y: position.y,
+    lane: "questions",
   });
 
   node.classList.add("node--question");
@@ -297,6 +435,7 @@ const buildPromptNode = ({ id, position, flow }) => {
     title: "System Briefing",
     x: position.x,
     y: position.y,
+    lane: "questions",
   });
 
   const pre = document.createElement("pre");
@@ -315,7 +454,9 @@ const buildLLMNode = ({ id, position, flow }) => {
     title: "Synopsis & Direction",
     x: position.x,
     y: position.y,
+    lane: "answers",
   });
+  node.classList.add("node--answer");
 
   const markdown = buildLLMAnswer(flow.question, flow.papers);
   renderMarkdown(body, markdown);
@@ -334,7 +475,9 @@ const buildEvidenceNode = ({ id, position, flow }) => {
     title: "Highlighted Papers",
     x: position.x,
     y: position.y,
+    lane: "artifacts",
   });
+  node.classList.add("node--artifact");
 
   const list = document.createElement("ul");
   list.className = "node__list";
@@ -382,8 +525,13 @@ const buildArtifactNode = ({ id, position, artifact }) => {
   const details = {
     title: artifact?.title || "Artifact",
     copy: artifact?.copy || "_Pending_: Integrate evidence artifact summary.",
-    link: artifact?.link || "#",
+    link: artifact?.link || "",
     cta: artifact?.cta || "Review Artifact",
+    abstract: artifact?.abstract || "",
+    journal: artifact?.journal || artifact?.source || "",
+    year: artifact?.year || "",
+    authors: artifact?.authors || "",
+    type: artifact?.type || (artifact?.abstract ? "reference" : "markdown"),
   };
 
   const { node, body } = createNodeShell({
@@ -392,26 +540,64 @@ const buildArtifactNode = ({ id, position, artifact }) => {
     title: details.title,
     x: position.x,
     y: position.y,
+    lane: position.lane || "artifacts",
   });
+  node.classList.add("node--artifact");
+  node.classList.add(
+    details.type === "reference" ? "node--artifact-reference" : "node--artifact-markdown"
+  );
 
-  const description = document.createElement("div");
-  renderMarkdown(description, details.copy);
-  description.style.fontSize = "0.92rem";
-  description.style.lineHeight = "1.65";
-  description.style.color = "var(--text-secondary)";
+  if (details.type === "reference") {
+    const titleEl =
+      details.link && details.link !== ""
+        ? document.createElement("a")
+        : document.createElement("span");
+    titleEl.className = "artifact__reference-title";
+    titleEl.textContent = details.title;
+    if (titleEl.tagName === "A") {
+      titleEl.href = details.link;
+      titleEl.target = "_blank";
+      titleEl.rel = "noopener noreferrer";
+    }
+    body.append(titleEl);
 
-  const action = document.createElement("a");
-  action.className = "artifact__link";
-  action.href = details.link;
-  if (details.link && details.link !== "#") {
+    if (details.journal || details.year || details.authors) {
+      const meta = document.createElement("p");
+      meta.className = "artifact__reference-meta";
+      meta.textContent = [details.journal, details.year, details.authors].filter(Boolean).join(" • ");
+      body.append(meta);
+    }
+
+    if (details.abstract) {
+      const abstractEl = document.createElement("div");
+      abstractEl.className = "artifact__reference-abstract";
+      renderMarkdown(abstractEl, details.abstract);
+      body.append(abstractEl);
+    }
+
+    if (details.copy && details.copy !== "_Pending_: Integrate evidence artifact summary.") {
+      const notes = document.createElement("div");
+      notes.className = "artifact__reference-notes";
+      renderMarkdown(notes, details.copy, { enableKroki: true });
+      body.append(notes);
+    }
+  } else {
+    const description = document.createElement("div");
+    description.className = "artifact__markdown";
+    renderMarkdown(description, details.copy, { enableKroki: true });
+    body.append(description);
+  }
+
+  if (details.link && details.link !== "") {
+    const action = document.createElement("a");
+    action.className = "artifact__link";
+    action.href = details.link;
     action.target = "_blank";
     action.rel = "noopener noreferrer";
-  } else {
-    action.setAttribute("role", "button");
+    action.textContent = details.cta || "Open Resource";
+    body.append(action);
   }
-  action.textContent = details.cta;
 
-  body.append(description, action);
   return node;
 };
 
@@ -422,7 +608,9 @@ const buildAbstractTabsNode = ({ id, position, flow }) => {
     title: "Abstract Explorer",
     x: position.x,
     y: position.y,
+    lane: "artifacts",
   });
+  node.classList.add("node--artifact");
 
   const tabsContainer = document.createElement("div");
   tabsContainer.className = "tabs";
@@ -483,7 +671,9 @@ const buildInsightsNode = ({ id, position, flow }) => {
     title: "Terms & Claims",
     x: position.x,
     y: position.y,
+    lane: "answers",
   });
+  node.classList.add("node--answer");
 
   const abstracts = flow.papers.map((paper) => paper.abstract);
   const topTerms = getTopTerms(abstracts);
@@ -542,14 +732,14 @@ const createInquiryFlow = (flow, index = flows.length) => {
   const columnLeftX = 48;
   const columnMiddleX = columnLeftX + columnSpacing;
   const columnRightX = columnMiddleX + columnSpacing;
-  const verticalSpacing = 240;
+  const verticalSpacing = 260;
   const layout = {
     question: { x: columnMiddleX, y: 40 + yOffset },
     prompt: { x: columnMiddleX, y: 40 + yOffset + verticalSpacing },
-    answer: { x: columnLeftX, y: 40 + yOffset },
-    insights: { x: columnLeftX, y: 40 + yOffset + verticalSpacing },
-    evidence: { x: columnRightX, y: 40 + yOffset },
-    abstracts: { x: columnRightX, y: 40 + yOffset + verticalSpacing },
+    answer: { x: columnLeftX, y: 40 + yOffset + verticalSpacing },
+    insights: { x: columnLeftX, y: 40 + yOffset + verticalSpacing * 2 },
+    evidence: { x: columnRightX, y: 40 + yOffset + verticalSpacing },
+    abstracts: { x: columnRightX, y: 40 + yOffset + verticalSpacing * 2 },
     metastudy: { x: columnMiddleX, y: 40 + yOffset + verticalSpacing * 2 },
     terpStudy: { x: columnMiddleX, y: 40 + yOffset + verticalSpacing * 3 },
   };
@@ -615,7 +805,7 @@ const createInquiryFlow = (flow, index = flows.length) => {
     flowRecord.nodes = {
       question: questionNode.id,
       prompt: promptNode.id,
-      answer: answerNode.id,
+    answer: answerNode.id,
       evidence: evidenceNode.id,
       abstracts: abstractsNode.id,
       insights: insightsNode.id,
@@ -625,11 +815,12 @@ const createInquiryFlow = (flow, index = flows.length) => {
 
     connectNodes(questionNode.id, promptNode.id);
     connectNodes(promptNode.id, answerNode.id);
+    connectNodes(answerNode.id, insightsNode.id);
     connectNodes(answerNode.id, evidenceNode.id);
-    connectNodes(answerNode.id, metastudyNode.id);
-    connectNodes(answerNode.id, terpStudyNode.id);
+    connectNodes(insightsNode.id, metastudyNode.id);
     connectNodes(evidenceNode.id, abstractsNode.id);
-    connectNodes(abstractsNode.id, insightsNode.id);
+    connectNodes(metastudyNode.id, terpStudyNode.id);
+    connectNodes(abstractsNode.id, terpStudyNode.id);
 
     ensureCanvasHeight(layout.terpStudy.y + verticalSpacing * 2);
   };
@@ -718,6 +909,7 @@ const INITIAL_FLOW = {
 const bootstrapWorkspace = () => {
   ensureJsPlumbInstance();
   createInquiryFlow(cloneDeep(INITIAL_FLOW), 0);
+  updateBadgeTimestamp();
 };
 
 if (window.jsPlumb && typeof window.jsPlumb.ready === "function") {
