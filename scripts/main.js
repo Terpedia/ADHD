@@ -103,6 +103,13 @@ const uid = (() => {
 
 const cloneDeep = (value) => JSON.parse(JSON.stringify(value));
 
+const truncateText = (value, maxLength = 120) => {
+  if (!value) return "";
+  const cleanValue = String(value).replace(/\s+/g, " ").trim();
+  if (cleanValue.length <= maxLength) return cleanValue;
+  return `${cleanValue.slice(0, maxLength - 1).trim()}…`;
+};
+
 const formatPaperLabel = (paper, index) =>
   paper.shortLabel ||
   `${paper.journal ? paper.journal.split(" ")[0] : "Paper"} ${index + 1}`;
@@ -392,6 +399,11 @@ const getTopTerms = (abstracts, limit = 8) => {
     .map(([term]) => term);
 };
 
+const emphasizeADHD = (text) =>
+  typeof text === "string"
+    ? text.replace(/(?<!\*)\bADHD\b(?!\*)/gi, (match) => `**${match.toUpperCase()}**`)
+    : text;
+
 const extractClaims = (papers) => {
   const triggerWords = ["significant", "modulates", "associated", "suggest", "improve", "correlates"];
   const claims = [];
@@ -414,18 +426,21 @@ const extractClaims = (papers) => {
 };
 
 const buildPrompt = (question, persona = "research strategist") => {
+  const highlightedQuestion = emphasizeADHD(question);
   return [
     `You are a ${persona} embedded within Terpedia's inquiry engine.`,
     `Your task is to evaluate whether emerging terpene science can inform ADHD-focused interventions.`,
     "",
-    `1. Restate the core user question: "${question}".`,
+    `1. Restate the core user question: "${highlightedQuestion}".`,
     "2. Identify terpene mechanisms (neurological, endocrine, behavioral) most relevant to attention regulation.",
     "3. Retrieve 3 recent peer-reviewed findings or preprints with clear links to ADHD, cognition, or focus.",
     "4. Summarize market-readiness signals (formulation maturity, safety evidence, regulatory posture).",
     "5. Recommend next investigative steps for experimentation or evidence gathering.",
     "",
     "Respond in no more than 220 words with concise paragraphs and clear callouts.",
-  ].join("\n");
+  ]
+    .map(emphasizeADHD)
+    .join("\n");
 };
 
 const buildLLMAnswer = (question, papers) => {
@@ -450,7 +465,7 @@ const buildLLMAnswer = (question, papers) => {
 /**
  * Node + line creation
  */
-const createNodeShell = ({ id, label, title, x, y, lane }) => {
+const createNodeShell = ({ id, label, title, summary, x, y, lane }) => {
   const node = document.createElement("section");
   node.className = "node";
   node.id = id;
@@ -460,26 +475,39 @@ const createNodeShell = ({ id, label, title, x, y, lane }) => {
     node.dataset.lane = lane;
   }
 
-  if (label || title) {
-    const header = document.createElement("header");
-    header.className = "node__header";
+  const header = document.createElement("header");
+  header.className = "node__header";
 
-    if (label) {
-      const labelEl = document.createElement("span");
-      labelEl.className = "node__label";
-      labelEl.textContent = label;
-      header.append(labelEl);
-    }
+  const headingGroup = document.createElement("div");
+  headingGroup.className = "node__heading";
 
-    if (title) {
-      const titleEl = document.createElement("h3");
-      titleEl.className = "node__title";
-      titleEl.textContent = title;
-      header.append(titleEl);
-    }
-
-    node.append(header);
+  if (label) {
+    const labelEl = document.createElement("span");
+    labelEl.className = "node__label";
+    labelEl.textContent = label;
+    headingGroup.append(labelEl);
   }
+
+  if (title) {
+    const titleEl = document.createElement("h3");
+    titleEl.className = "node__title";
+    titleEl.textContent = title;
+    headingGroup.append(titleEl);
+  }
+
+  header.append(headingGroup);
+
+  const toggleButton = document.createElement("button");
+  toggleButton.className = "node__collapse";
+  toggleButton.type = "button";
+  toggleButton.setAttribute("aria-label", "Toggle section");
+  header.append(toggleButton);
+
+  node.append(header);
+
+  const summaryEl = document.createElement("div");
+  summaryEl.className = "node__summary";
+  node.append(summaryEl);
 
   const body = document.createElement("div");
   body.className = "node__body";
@@ -492,10 +520,46 @@ const createNodeShell = ({ id, label, title, x, y, lane }) => {
     jsPlumbInstance.revalidate(node);
   }
 
+  const defaultSummary = summary || title || label || "Collapsed view";
+  const applySummary = (value) => {
+    const text = value && value.trim() ? value.trim() : defaultSummary;
+    summaryEl.textContent = text;
+    node.dataset.summary = text;
+  };
+
+  const updateToggleVisual = (expanded) => {
+    toggleButton.setAttribute("aria-expanded", expanded ? "true" : "false");
+    toggleButton.textContent = expanded ? "−" : "+";
+    toggleButton.setAttribute("aria-label", expanded ? "Collapse section" : "Expand section");
+  };
+
+  const setCollapsed = (state) => {
+    const shouldCollapse =
+      typeof state === "boolean" ? state : !node.classList.contains("node--collapsed");
+    node.classList.toggle("node--collapsed", shouldCollapse);
+    summaryEl.hidden = !shouldCollapse;
+    body.hidden = shouldCollapse;
+    updateToggleVisual(!shouldCollapse);
+    if (jsPlumbInstance) {
+      jsPlumbInstance.revalidate(node);
+    }
+    scheduleLayout();
+  };
+
+  toggleButton.addEventListener("click", () => {
+    setCollapsed();
+  });
+
+  applySummary(defaultSummary);
+  setCollapsed(false);
+
+  node.__setSummary = applySummary;
+  node.__setCollapsed = setCollapsed;
+
   registerNodeForResize(node);
   scheduleLayout();
 
-  return { node, body };
+  return { node, body, setSummary: applySummary, setCollapsed };
 };
 
 const connectNodes = (fromId, toId) => {
@@ -522,16 +586,20 @@ const connectNodes = (fromId, toId) => {
  * Node builders
  */
 const buildQuestionNode = ({ id, position, flow, onQuestionChange }) => {
-  const { node, body } = createNodeShell({
+  const initialSummary = truncateText(flow.question || "Pose your question", 100);
+  const { node, body, setSummary, setCollapsed } = createNodeShell({
     id,
-    label: null,
+    label: "Question",
     title: null,
+    summary: initialSummary,
     x: position.x,
     y: position.y,
     lane: "questions",
   });
 
   node.classList.add("node--question");
+  setSummary(initialSummary);
+  setCollapsed(false);
 
   const input = document.createElement("input");
   input.type = "text";
@@ -543,6 +611,11 @@ const buildQuestionNode = ({ id, position, flow, onQuestionChange }) => {
   input.addEventListener("input", (event) => {
     const value = event.target.value.trim();
     onQuestionChange(value.length ? value : flow.question);
+    setSummary(truncateText(value || "Pose your question", 100));
+  });
+
+  input.addEventListener("focus", () => {
+    node.__setCollapsed?.(false);
   });
 
   body.append(input);
@@ -550,14 +623,20 @@ const buildQuestionNode = ({ id, position, flow, onQuestionChange }) => {
 };
 
 const buildPromptNode = ({ id, position, flow }) => {
-  const { node, body } = createNodeShell({
+  const summaryText = flow.question
+    ? truncateText(`Briefing for “${flow.question}”`, 110)
+    : "System briefing template";
+  const { node, body, setSummary } = createNodeShell({
     id,
     label: "LLM Prompt",
     title: "System Briefing",
+    summary: summaryText,
     x: position.x,
     y: position.y,
     lane: "questions",
   });
+
+  setSummary(summaryText);
 
   const pre = document.createElement("pre");
   pre.className = "node__prompt";
@@ -569,7 +648,7 @@ const buildPromptNode = ({ id, position, flow }) => {
 };
 
 const buildLLMNode = ({ id, position, flow }) => {
-  const { node, body } = createNodeShell({
+  const { node, body, setSummary } = createNodeShell({
     id,
     label: "LLM Output",
     title: "Synopsis & Direction",
@@ -579,8 +658,14 @@ const buildLLMNode = ({ id, position, flow }) => {
   });
   node.classList.add("node--answer");
 
-    const papers = getFlowPapers(flow);
-    const markdown = buildLLMAnswer(flow.question, papers);
+  const papers = getFlowPapers(flow);
+  const markdown = buildLLMAnswer(flow.question, papers);
+  const summaryLine =
+    markdown
+      .split("\n")
+      .map((line) => line.replace(/^[•\-\s]+/, "").trim())
+      .find(Boolean) || "LLM synthesis ready";
+  setSummary(truncateText(summaryLine, 120));
   renderMarkdown(body, markdown);
   body.querySelectorAll("p").forEach((paragraph) => {
     paragraph.style.marginBottom = "0.9rem";
@@ -591,20 +676,26 @@ const buildLLMNode = ({ id, position, flow }) => {
 };
 
 const buildEvidenceNode = ({ id, position, flow }) => {
-  const { node, body } = createNodeShell({
+  const papers = getFlowPapers(flow);
+  const summaryText = papers.length
+    ? `${papers.length} highlighted article${papers.length === 1 ? "" : "s"}`
+    : "No articles available yet";
+  const { node, body, setSummary } = createNodeShell({
     id,
     label: "Evidence",
     title: "Highlighted Papers",
+    summary: summaryText,
     x: position.x,
     y: position.y,
     lane: "artifacts",
   });
   node.classList.add("node--artifact");
+  setSummary(summaryText);
 
   const list = document.createElement("ul");
   list.className = "node__list";
 
-  flow.papers.forEach((paper) => {
+  papers.forEach((paper) => {
     const item = document.createElement("li");
     item.className = "node__list-item";
 
@@ -656,10 +747,16 @@ const buildArtifactNode = ({ id, position, artifact }) => {
     type: artifact?.type || (artifact?.abstract ? "reference" : "markdown"),
   };
 
-  const { node, body } = createNodeShell({
+  const summaryText =
+    truncateText(details.copy !== "_Pending_: Integrate evidence artifact summary." ? details.copy : "", 140) ||
+    truncateText(details.abstract, 140) ||
+    details.title;
+
+  const { node, body, setSummary } = createNodeShell({
     id,
     label: "Artifact",
     title: details.title,
+    summary: summaryText,
     x: position.x,
     y: position.y,
     lane: position.lane || "artifacts",
@@ -718,19 +815,26 @@ const buildArtifactNode = ({ id, position, artifact }) => {
     body.append(wrapper);
   }
 
+  setSummary(summaryText);
   return node;
 };
 
 const buildAbstractTabsNode = ({ id, position, flow }) => {
-  const { node, body } = createNodeShell({
+  const papers = getFlowPapers(flow);
+  const initialSummary = papers[0]
+    ? truncateText(papers[0].title, 110)
+    : "Select a paper to view its abstract";
+  const { node, body, setSummary } = createNodeShell({
     id,
     label: "Deep Dive",
     title: "Abstract Explorer",
+    summary: initialSummary,
     x: position.x,
     y: position.y,
     lane: "artifacts",
   });
   node.classList.add("node--artifact");
+  setSummary(initialSummary);
 
   const tabsContainer = document.createElement("div");
   tabsContainer.className = "tabs";
@@ -759,9 +863,10 @@ const buildAbstractTabsNode = ({ id, position, flow }) => {
     });
 
     panel.append(heading, abstract);
+    setSummary(truncateText(paper.title, 110));
   };
 
-  const buttons = flow.papers.map((paper, index) => {
+  const buttons = papers.map((paper, index) => {
     const button = document.createElement("button");
     button.className = "tabs__button";
     button.type = "button";
@@ -775,9 +880,9 @@ const buildAbstractTabsNode = ({ id, position, flow }) => {
     return button;
   });
 
-  if (buttons[0]) {
+  if (buttons[0] && papers[0]) {
     buttons[0].classList.add("is-active");
-    renderAbstract(flow.papers[0]);
+    renderAbstract(papers[0]);
   }
 
   body.append(tabsContainer, panel);
@@ -785,7 +890,8 @@ const buildAbstractTabsNode = ({ id, position, flow }) => {
 };
 
 const buildInsightsNode = ({ id, position, flow }) => {
-  const { node, body } = createNodeShell({
+  const papers = getFlowPapers(flow);
+  const { node, body, setSummary } = createNodeShell({
     id,
     label: "Synthesis",
     title: "Terms & Claims",
@@ -795,9 +901,13 @@ const buildInsightsNode = ({ id, position, flow }) => {
   });
   node.classList.add("node--answer");
 
-  const abstracts = flow.papers.map((paper) => paper.abstract);
+  const abstracts = papers.map((paper) => paper.abstract).filter(Boolean);
   const topTerms = getTopTerms(abstracts);
-  const claims = extractClaims(flow.papers);
+  const claims = extractClaims(papers);
+  const summaryText = topTerms.length
+    ? `Top terms: ${topTerms.slice(0, 3).join(", ")}`
+    : "Awaiting synthesized insights";
+  setSummary(truncateText(summaryText, 120));
 
   const chipContainer = document.createElement("div");
   chipContainer.className = "chips";
@@ -962,6 +1072,13 @@ const refreshPrompt = (flowId) => {
   if (promptNode) {
     promptNode.textContent = buildPrompt(flowRecord.data.question);
   }
+  const promptSection = document.getElementById(flowRecord.nodes.prompt);
+  if (promptSection && typeof promptSection.__setSummary === "function") {
+    const summaryText = flowRecord.data.question
+      ? truncateText(`Briefing for “${flowRecord.data.question}”`, 110)
+      : "System briefing template";
+    promptSection.__setSummary(summaryText);
+  }
   if (jsPlumbInstance) {
     jsPlumbInstance.revalidate(flowRecord.nodes.prompt);
   }
@@ -974,12 +1091,21 @@ const refreshLLM = (flowId) => {
   const node = document.getElementById(flowRecord.nodes.answer);
   if (!node) return;
   const body = node.querySelector(".node__body");
-  const markdown = buildLLMAnswer(flowRecord.data.question, flowRecord.data.papers);
+  const papers = getFlowPapers(flowRecord.data);
+  const markdown = buildLLMAnswer(flowRecord.data.question, papers);
   renderMarkdown(body, markdown);
   body.querySelectorAll("p").forEach((paragraph) => {
     paragraph.style.marginBottom = "0.9rem";
     paragraph.style.color = "var(--text-secondary)";
   });
+  if (typeof node.__setSummary === "function") {
+    const summaryLine =
+      markdown
+        .split("\n")
+        .map((line) => line.replace(/^[•\-\s]+/, "").trim())
+        .find(Boolean) || "LLM synthesis ready";
+    node.__setSummary(truncateText(summaryLine, 120));
+  }
   if (jsPlumbInstance) {
     jsPlumbInstance.revalidate(flowRecord.nodes.answer);
   }
