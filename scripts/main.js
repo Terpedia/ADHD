@@ -37,6 +37,31 @@ const LANE_INDEX = {
   questions: 1,
   artifacts: 2,
 };
+const NODE_LANES = {
+  question: "questions",
+  prompt: "questions",
+  answer: "answers",
+  insights: "answers",
+  evidence: "artifacts",
+  abstracts: "artifacts",
+  metastudy: "artifacts",
+  terpStudy: "artifacts",
+};
+const ROW_SEQUENCE = [
+  ["question"],
+  ["prompt"],
+  ["answer"],
+  ["insights"],
+  ["evidence"],
+  ["abstracts"],
+  ["metastudy"],
+  ["terpStudy"],
+];
+const ROW_GAP = 64;
+const FLOW_GAP = 180;
+const CANVAS_TOP_PADDING = 32;
+const CANVAS_BOTTOM_PADDING = 200;
+let pendingLayoutFrame = null;
 
 const STOP_WORDS = new Set(
   [
@@ -171,11 +196,9 @@ const ensureJsPlumbInstance = () => {
 
 const ensureCanvasHeight = (requiredHeight) => {
   if (!canvas) return;
-  const current = parseFloat(canvas.dataset.minHeight || canvas.style.minHeight || "0") || 0;
-  if (current < requiredHeight) {
-    canvas.style.minHeight = `${requiredHeight}px`;
-    canvas.dataset.minHeight = String(requiredHeight);
-  }
+  const height = Math.max(requiredHeight, window.innerHeight + CANVAS_BOTTOM_PADDING);
+  canvas.style.minHeight = `${height}px`;
+  canvas.style.height = `${height}px`;
 };
 
 const getLaneCenterX = (laneName) => {
@@ -197,6 +220,84 @@ const alignNodeToLane = (node, laneName) => {
   node.style.left = `${position}px`;
 };
 
+const scheduleLayout = () => {
+  if (pendingLayoutFrame) {
+    cancelAnimationFrame(pendingLayoutFrame);
+  }
+  pendingLayoutFrame = requestAnimationFrame(() => {
+    pendingLayoutFrame = null;
+    layoutFlows();
+  });
+};
+
+const layoutFlows = () => {
+  if (!canvas) return;
+  const instance = ensureJsPlumbInstance();
+
+  let flowOffset = CANVAS_TOP_PADDING;
+  let maxBottom = flowOffset;
+
+  flows.forEach((flowRecord) => {
+    if (!flowRecord?.nodes) return;
+
+    const laneOffsets = {
+      answers: flowOffset,
+      questions: flowOffset,
+      artifacts: flowOffset,
+    };
+
+    ROW_SEQUENCE.forEach((keys) => {
+      const nodesInRow = keys
+        .map((key) => ({
+          key,
+          id: flowRecord.nodes[key],
+          lane: NODE_LANES[key],
+        }))
+        .filter(({ id, lane }) => id && lane && document.getElementById(id));
+
+      if (!nodesInRow.length) return;
+
+      const rowTop = Math.max(
+        ...nodesInRow.map(({ lane }) => laneOffsets[lane] || flowOffset)
+      );
+
+      let rowBottom = rowTop;
+
+      nodesInRow.forEach(({ id, lane }) => {
+        const node = document.getElementById(id);
+        if (!node) return;
+
+        alignNodeToLane(node, lane);
+        node.style.top = `${rowTop}px`;
+
+        const height = node.offsetHeight || parseFloat(getComputedStyle(node).height) || 240;
+        const bottom = rowTop + height;
+        laneOffsets[lane] = bottom + ROW_GAP;
+        rowBottom = Math.max(rowBottom, bottom);
+
+        if (instance) {
+          instance.revalidate(node);
+        }
+      });
+
+      const nextRowBase = rowBottom + ROW_GAP;
+      Object.keys(laneOffsets).forEach((lane) => {
+        laneOffsets[lane] = Math.max(laneOffsets[lane], nextRowBase);
+      });
+      maxBottom = Math.max(maxBottom, nextRowBase);
+    });
+
+    flowOffset = Math.max(...Object.values(laneOffsets)) + FLOW_GAP;
+    maxBottom = Math.max(maxBottom, flowOffset);
+  });
+
+  ensureCanvasHeight(maxBottom + CANVAS_BOTTOM_PADDING);
+
+  if (instance) {
+    instance.repaintEverything();
+  }
+};
+
 const NODE_RESIZE_OBSERVER =
   typeof ResizeObserver !== "undefined"
     ? new ResizeObserver((entries) => {
@@ -207,6 +308,7 @@ const NODE_RESIZE_OBSERVER =
           if (jsPlumbInstance) {
             jsPlumbInstance.revalidate(target);
           }
+          scheduleLayout();
         });
       })
     : null;
@@ -358,30 +460,25 @@ const createNodeShell = ({ id, label, title, x, y, lane }) => {
   canvas.append(node);
   const instance = ensureJsPlumbInstance();
   if (instance) {
-    instance.draggable(node, {
-      containment: true,
-      grid: [20, 20],
-      stop: (params) => {
-        const element = params?.el || node;
-        if (element) {
-          const laneName = element.dataset?.lane;
-          if (laneName) alignNodeToLane(element, laneName);
-          if (jsPlumbInstance) {
-            jsPlumbInstance.revalidate(element);
-          }
-        }
-      },
+    instance.manage(node);
+    instance.makeSource(node, {
+      filter: ".node__header, .node__body",
+      anchor: "BottomCenter",
+      allowLoopback: false,
+    });
+    instance.makeTarget(node, {
+      anchor: "TopCenter",
+      allowLoopback: false,
     });
   }
 
-  requestAnimationFrame(() => {
-    alignNodeToLane(node, lane);
-    if (jsPlumbInstance) {
-      jsPlumbInstance.revalidate(node);
-    }
-  });
+  alignNodeToLane(node, lane);
+  if (jsPlumbInstance) {
+    jsPlumbInstance.revalidate(node);
+  }
 
   registerNodeForResize(node);
+  scheduleLayout();
 
   return { node, body };
 };
@@ -582,20 +679,18 @@ const buildArtifactNode = ({ id, position, artifact }) => {
       body.append(notes);
     }
   } else {
-    const description = document.createElement("div");
-    description.className = "artifact__markdown";
-    renderMarkdown(description, details.copy, { enableKroki: true });
-    body.append(description);
-  }
-
-  if (details.link && details.link !== "") {
-    const action = document.createElement("a");
-    action.className = "artifact__link";
-    action.href = details.link;
-    action.target = "_blank";
-    action.rel = "noopener noreferrer";
-    action.textContent = details.cta || "Open Resource";
-    body.append(action);
+    const wrapper =
+      details.link && details.link !== ""
+        ? document.createElement("a")
+        : document.createElement("div");
+    wrapper.className = "artifact__markdown";
+    if (wrapper.tagName === "A") {
+      wrapper.href = details.link;
+      wrapper.target = "_blank";
+      wrapper.rel = "noopener noreferrer";
+    }
+    renderMarkdown(wrapper, details.copy, { enableKroki: true });
+    body.append(wrapper);
   }
 
   return node;
@@ -727,21 +822,22 @@ const buildInsightsNode = ({ id, position, flow }) => {
  */
 const createInquiryFlow = (flow, index = flows.length) => {
   const flowId = uid("flow");
-  const yOffset = index * 720;
+  const yOffset = index * 920;
   const columnSpacing = 360;
   const columnLeftX = 48;
   const columnMiddleX = columnLeftX + columnSpacing;
   const columnRightX = columnMiddleX + columnSpacing;
-  const verticalSpacing = 260;
+  const verticalSpacing = 220;
+  const rowY = (row) => 40 + yOffset + verticalSpacing * row;
   const layout = {
-    question: { x: columnMiddleX, y: 40 + yOffset },
-    prompt: { x: columnMiddleX, y: 40 + yOffset + verticalSpacing },
-    answer: { x: columnLeftX, y: 40 + yOffset + verticalSpacing },
-    insights: { x: columnLeftX, y: 40 + yOffset + verticalSpacing * 2 },
-    evidence: { x: columnRightX, y: 40 + yOffset + verticalSpacing },
-    abstracts: { x: columnRightX, y: 40 + yOffset + verticalSpacing * 2 },
-    metastudy: { x: columnMiddleX, y: 40 + yOffset + verticalSpacing * 2 },
-    terpStudy: { x: columnMiddleX, y: 40 + yOffset + verticalSpacing * 3 },
+    question: { x: columnMiddleX, y: rowY(0) },
+    prompt: { x: columnMiddleX, y: rowY(1) },
+    answer: { x: columnLeftX, y: rowY(2) },
+    insights: { x: columnLeftX, y: rowY(3) },
+    evidence: { x: columnRightX, y: rowY(3) },
+    abstracts: { x: columnRightX, y: rowY(4) },
+    metastudy: { x: columnMiddleX, y: rowY(4) },
+    terpStudy: { x: columnMiddleX, y: rowY(5) },
   };
 
   const flowRecord = { id: flowId, data: flow, nodes: {} };
@@ -822,7 +918,6 @@ const createInquiryFlow = (flow, index = flows.length) => {
     connectNodes(metastudyNode.id, terpStudyNode.id);
     connectNodes(abstractsNode.id, terpStudyNode.id);
 
-    ensureCanvasHeight(layout.terpStudy.y + verticalSpacing * 2);
   };
 
   if (instance) {
@@ -831,6 +926,8 @@ const createInquiryFlow = (flow, index = flows.length) => {
   } else {
     buildFlow();
   }
+
+  scheduleLayout();
 };
 
 const refreshPrompt = (flowId) => {
@@ -843,6 +940,7 @@ const refreshPrompt = (flowId) => {
   if (jsPlumbInstance) {
     jsPlumbInstance.revalidate(flowRecord.nodes.prompt);
   }
+  scheduleLayout();
 };
 
 const refreshLLM = (flowId) => {
@@ -860,6 +958,7 @@ const refreshLLM = (flowId) => {
   if (jsPlumbInstance) {
     jsPlumbInstance.revalidate(flowRecord.nodes.answer);
   }
+  scheduleLayout();
 };
 
 /**
@@ -932,4 +1031,9 @@ newFlowButton.addEventListener("click", () => {
   } else {
     createInquiryFlow(flowData, flows.length);
   }
+  scheduleLayout();
+});
+
+window.addEventListener("resize", () => {
+  scheduleLayout();
 });
