@@ -1,4 +1,24 @@
 const DEFAULT_METASTUDY = {
+  question: "Generate a metastudy about ADHD backed by our current evidence graph.",
+  abstract:
+    "Objective: Aggregate cross-modal ADHD interventions to surface consistent response patterns. Methods: Synthesised 42 peer-reviewed trials spanning CBT, pharmacological, and integrative modalities, normalising outcomes to executive-function endpoints. Findings: Sustained attention improved in 71% of interventions with a pooled Hedges g of 0.42; working-memory gains tracked alongside dopaminergic modulation. Interpretation: The evidence backbone substantiates continued combination strategies blending neuromodulation, behavioural scaffolding, and terpene adjuncts.",
+  markdown: [
+    "# ADHD Metastudy Summary",
+    "",
+    "## Scope",
+    "- 42 trials; adult and adolescent cohorts",
+    "- Modalities: CBT, stimulant and non-stimulant pharmacology, integrative protocols",
+    "",
+    "## Key Findings",
+    "- Sustained attention: pooled Hedges g 0.42 (CI 0.31–0.53)",
+    "- Working memory: 0.36 (CI 0.21–0.48)",
+    "- Emotional regulation: 0.28 (CI 0.15–0.40)",
+    "",
+    "## Recommendations",
+    "1. Advance terpene adjunct programmes paired with structured CBT.",
+    "2. Expand longitudinal monitoring for executive-function durability.",
+    "3. Align formulation readiness with upcoming regulatory checkpoints.",
+  ].join("\n"),
   title: "Metastudy • ADHD Focus Evidence Backbone",
   copy: [
     "**Scope:** 42 trials spanning CBT, pharmacological, and integrative ADHD interventions.",
@@ -11,6 +31,27 @@ const DEFAULT_METASTUDY = {
 };
 
 const DEFAULT_TERP_STUDY = {
+  question: "Write a targeted study on terpenes and ADHD suited for rapid product iteration.",
+  abstract:
+    "Objective: Design a targeted validation study quantifying terpene contributions to ADHD symptom improvement. Methods: Prospective 12-week cohort randomised to terpene-rich formulation vs. standard behavioural therapy; endpoints include n-back accuracy, EEG beta synchrony, and clinician-rated focus inventories. Findings: Expected medium effect on sustained attention (d≈0.38) with correlated noradrenergic biomarkers. Interpretation: Study de-risks terpene integration and establishes readiness checkpoints for formulation scale-up.",
+  markdown: [
+    "# Terpene × ADHD Targeted Study Plan",
+    "",
+    "## Study Design",
+    "- Duration: 12 weeks",
+    "- Population: Adults 18–45 with diagnosed ADHD (combined presentation)",
+    "- Arms: Terpene formulation + behavioural therapy vs. behavioural therapy alone",
+    "",
+    "## Outcome Measures",
+    "- Primary: n-back working-memory accuracy",
+    "- Secondary: EEG beta synchrony, focus inventory, daytime alertness",
+    "- Exploratory: Supply-chain stability and sensory compliance",
+    "",
+    "## Next Steps",
+    "1. Finalise terpene sourcing (linalool / alpha-pinene / beta-caryophyllene ratios).",
+    "2. Register protocol and align with safety review board.",
+    "3. Launch pilot with staged data locks at weeks 6 and 12.",
+  ].join("\n"),
   title: "Targeted Study • Terpene Synergy for ADHD",
   copy: [
     "**Design:** 12-week pilot comparing terpene-rich formulations vs. placebo in adult ADHD cohorts.",
@@ -26,6 +67,47 @@ const newFlowButton = document.getElementById("new-flow-button");
 const badge = document.querySelector(".build-badge");
 
 const GRAPH_DEFINITION_URL = "./inquiry-graph.json";
+
+const cloneDeep = (value) => JSON.parse(JSON.stringify(value));
+
+const DEFAULT_PAPERS = [
+  {
+    title: "Linalool Modulates Prefrontal Cortical Oscillations Linked to Sustained Attention",
+    journal: "Journal of Neuropharmacology",
+    year: 2024,
+    link: "https://doi.org/10.5555/jnp.2024.11827",
+    summary:
+      "Acute inhalation of linalool enhanced beta-band synchrony and reduced variability in attention task performance among neurodivergent adults.",
+    abstract:
+      "In a randomized crossover study, we evaluated the impact of inhaled linalool on sustained attention in adults with ADHD traits. EEG recordings revealed enhanced beta oscillations within dorsolateral prefrontal regions and improved reaction time stability during continuous performance tasks. These findings suggest linalool may modulate cortical excitability relevant to attentional control.",
+    keyTerpene: "linalool",
+    shortLabel: "Linalool EEG",
+  },
+  {
+    title: "Pinene-Rich Blends and Executive Function Among Adolescents with ADHD",
+    journal: "Phytotherapy Research",
+    year: 2023,
+    link: "https://doi.org/10.5555/phyto.2023.90442",
+    summary:
+      "Pinene-dominant terpene formulations improved working memory scores and daytime alertness in a 6-week observational cohort.",
+    abstract:
+      "We tracked executive function metrics in adolescents supplementing with a pinene-rich terpene blend alongside standard behavioral therapy. Significant improvements were observed in n-back working memory accuracy and classroom alertness ratings versus matched controls. Mechanistic assays suggest synergistic modulation of noradrenergic signaling.",
+    keyTerpene: "alpha-pinene",
+    shortLabel: "Pinene Cohort",
+  },
+  {
+    title: "Beta-Caryophyllene as an Adjunctive Strategy for Emotional Regulation in ADHD",
+    journal: "Frontiers in Behavioral Neuroscience",
+    year: 2022,
+    link: "https://doi.org/10.5555/frontiers.2022.66721",
+    summary:
+      "CB2 agonism via beta-caryophyllene correlated with reduced emotional lability and improved task persistence scores.",
+    abstract:
+      "This double-blind pilot explored beta-caryophyllene supplementation in young adults managing ADHD-related dysregulation. Participants reported reduced emotional volatility and increased task persistence. Immune assays and salivary cortisol data indicate CB2-mediated anti-inflammatory pathways that may indirectly support executive functioning.",
+    keyTerpene: "beta-caryophyllene",
+    shortLabel: "BCP Pilot",
+  },
+];
 
 const flows = [];
 let jsPlumbInstance = null;
@@ -68,8 +150,8 @@ const COLOR_LINE = getComputedStyle(document.documentElement)
   .trim();
 const BODY_DATASET = document.body.dataset || {};
 const LANE_INDEX = {
-  answers: 0,
-  questions: 1,
+  questions: 0,
+  answers: 1,
   artifacts: 2,
 };
 const NODE_LANES = {
@@ -79,7 +161,13 @@ const NODE_LANES = {
   insights: "answers",
   evidence: "artifacts",
   abstracts: "artifacts",
+  metastudyQuestion: "questions",
+  metastudyAbstract: "answers",
+  metastudyMarkdown: "answers",
   metastudy: "artifacts",
+  terpStudyQuestion: "questions",
+  terpStudyAbstract: "answers",
+  terpStudyMarkdown: "answers",
   terpStudy: "artifacts",
 };
 const ROW_SEQUENCE = [
@@ -89,12 +177,19 @@ const ROW_SEQUENCE = [
   ["insights"],
   ["evidence"],
   ["abstracts"],
+  ["metastudyQuestion"],
+  ["metastudyAbstract"],
+  ["metastudyMarkdown"],
   ["metastudy"],
+  ["terpStudyQuestion"],
+  ["terpStudyAbstract"],
+  ["terpStudyMarkdown"],
   ["terpStudy"],
 ];
 const ROW_GAP = 64;
+const ROW_BASE_OFFSET = 120;
 const FLOW_GAP = 180;
-const CANVAS_TOP_PADDING = 32;
+const CANVAS_TOP_PADDING = 140;
 const CANVAS_BOTTOM_PADDING = 200;
 let pendingLayoutFrame = null;
 
@@ -135,8 +230,6 @@ const uid = (() => {
   let count = 0;
   return (prefix = "node") => `${prefix}-${Date.now()}-${++count}`;
 })();
-
-const cloneDeep = (value) => JSON.parse(JSON.stringify(value));
 
 const truncateText = (value, maxLength = 120) => {
   if (!value) return "";
@@ -597,7 +690,7 @@ const createNodeShell = ({ id, label, title, summary, x, y, lane }) => {
   return { node, body, setSummary: applySummary, setCollapsed };
 };
 
-const connectNodes = (fromId, toId) => {
+const connectNodes = (fromId, toId, flowId) => {
   const instance = ensureJsPlumbInstance();
   if (!instance) return;
   const sourceEl = document.getElementById(fromId);
@@ -608,13 +701,19 @@ const connectNodes = (fromId, toId) => {
   if (sourceLane === "answers" && targetLane === "artifacts") {
     anchors = ["Right", "Left"];
   }
-
-  instance.connect({
+  const connection = instance.connect({
     source: fromId,
     target: toId,
     anchors,
     cssClass: "flow-connection",
   });
+
+  if (flowId) {
+    if (!flowConnections.has(flowId)) {
+      flowConnections.set(flowId, []);
+    }
+    flowConnections.get(flowId).push(connection);
+  }
 };
 
 /**
@@ -654,6 +753,29 @@ const buildQuestionNode = ({ id, position, flow, onQuestionChange }) => {
   });
 
   body.append(input);
+  return node;
+};
+
+const buildStaticQuestionNode = ({ id, position, text }) => {
+  const summary = truncateText(text, 120);
+  const { node, body, setSummary } = createNodeShell({
+    id,
+    label: "Question",
+    title: null,
+    summary,
+    x: position.x,
+    y: position.y,
+    lane: "questions",
+  });
+
+  node.classList.add("node--question");
+  const paragraph = document.createElement("p");
+  paragraph.textContent = text;
+  paragraph.style.margin = "0";
+  paragraph.style.textAlign = "left";
+  body.append(paragraph);
+
+  setSummary(summary);
   return node;
 };
 
@@ -870,6 +992,69 @@ const buildEvidenceNode = ({ id, position, flow }) => {
     body.append(docsContainer);
   }
 
+  return node;
+};
+
+const buildAbstractAnswerNode = ({ id, position, title, label = "LLM Output", abstract }) => {
+  const summary = truncateText(abstract, 140);
+  const { node, body, setSummary } = createNodeShell({
+    id,
+    label,
+    title,
+    summary,
+    x: position.x,
+    y: position.y,
+    lane: "answers",
+  });
+  node.classList.add("node--answer");
+
+  if (abstract) {
+    renderMarkdown(body, abstract);
+  } else {
+    const placeholder = document.createElement("p");
+    placeholder.textContent = "Abstract pending.";
+    placeholder.style.margin = "0";
+    placeholder.style.color = "var(--text-secondary)";
+    body.append(placeholder);
+  }
+
+  setSummary(summary || "Abstract pending.");
+  return node;
+};
+
+const buildMarkdownAnswerNode = ({
+  id,
+  position,
+  title,
+  label = "LLM Output",
+  markdownContent,
+}) => {
+  const summary = truncateText(markdownContent, 140);
+  const { node, body, setSummary } = createNodeShell({
+    id,
+    label,
+    title,
+    summary,
+    x: position.x,
+    y: position.y,
+    lane: "answers",
+  });
+  node.classList.add("node--answer");
+
+  if (markdownContent) {
+    const pre = document.createElement("pre");
+    pre.className = "node__markdown-export";
+    pre.textContent = markdownContent;
+    body.append(pre);
+  } else {
+    const placeholder = document.createElement("p");
+    placeholder.textContent = "Markdown export pending.";
+    placeholder.style.margin = "0";
+    placeholder.style.color = "var(--text-secondary)";
+    body.append(placeholder);
+  }
+
+  setSummary(summary || "Markdown export pending.");
   return node;
 };
 
@@ -1102,23 +1287,30 @@ const createInquiryFlow = (flow, index = flows.length) => {
   const columnMiddleX = columnLeftX + columnSpacing;
   const columnRightX = columnMiddleX + columnSpacing;
   const verticalSpacing = 220;
-  const rowY = (row) => 40 + yOffset + verticalSpacing * row;
+  const rowY = (row) => ROW_BASE_OFFSET + yOffset + verticalSpacing * row;
   const layout = {
-    question: { x: columnMiddleX, y: rowY(0) },
-    prompt: { x: columnMiddleX, y: rowY(1) },
-    answer: { x: columnLeftX, y: rowY(2) },
-    insights: { x: columnLeftX, y: rowY(3) },
-    evidence: { x: columnRightX, y: rowY(3) },
-    abstracts: { x: columnRightX, y: rowY(4) },
-    metastudy: { x: columnMiddleX, y: rowY(4) },
-    terpStudy: { x: columnMiddleX, y: rowY(5) },
+    question: { x: columnLeftX, y: rowY(0) },
+    prompt: { x: columnLeftX, y: rowY(1) },
+    answer: { x: columnMiddleX, y: rowY(2) },
+    insights: { x: columnMiddleX, y: rowY(3) },
+    evidence: { x: columnRightX, y: rowY(4) },
+    abstracts: { x: columnRightX, y: rowY(5) },
+    metastudyQuestion: { x: columnLeftX, y: rowY(6) },
+    metastudyAbstract: { x: columnMiddleX, y: rowY(7) },
+    metastudyMarkdown: { x: columnMiddleX, y: rowY(8) },
+    metastudy: { x: columnRightX, y: rowY(9) },
+    terpStudyQuestion: { x: columnLeftX, y: rowY(10) },
+    terpStudyAbstract: { x: columnMiddleX, y: rowY(11) },
+    terpStudyMarkdown: { x: columnMiddleX, y: rowY(12) },
+    terpStudy: { x: columnRightX, y: rowY(13) },
   };
 
   const flowRecord = { id: flowId, data: flow, nodes: {} };
   flows.push(flowRecord);
+  flowConnections.set(flowId, []);
 
   const instance = ensureJsPlumbInstance();
-  const buildFlow = () => {
+    const buildFlow = () => {
     const questionNode = buildQuestionNode({
       id: `${flowId}-question`,
       position: layout.question,
@@ -1183,14 +1375,14 @@ const createInquiryFlow = (flow, index = flows.length) => {
       terpStudy: terpStudyNode.id,
     };
 
-    connectNodes(questionNode.id, promptNode.id);
-    connectNodes(promptNode.id, answerNode.id);
-    connectNodes(answerNode.id, insightsNode.id);
-    connectNodes(answerNode.id, evidenceNode.id);
-    connectNodes(insightsNode.id, metastudyNode.id);
-    connectNodes(evidenceNode.id, abstractsNode.id);
-    connectNodes(metastudyNode.id, terpStudyNode.id);
-    connectNodes(abstractsNode.id, terpStudyNode.id);
+      connectNodes(questionNode.id, promptNode.id, flowId);
+      connectNodes(promptNode.id, answerNode.id, flowId);
+      connectNodes(answerNode.id, insightsNode.id, flowId);
+      connectNodes(answerNode.id, evidenceNode.id, flowId);
+      connectNodes(insightsNode.id, metastudyNode.id, flowId);
+      connectNodes(evidenceNode.id, abstractsNode.id, flowId);
+      connectNodes(metastudyNode.id, terpStudyNode.id, flowId);
+      connectNodes(abstractsNode.id, terpStudyNode.id, flowId);
 
   };
 

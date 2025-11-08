@@ -1,0 +1,4 @@
+server/node_modules/
+server/.env
+data/uploads/
+data/manifest.json
