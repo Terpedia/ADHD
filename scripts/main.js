@@ -174,8 +174,9 @@ const ROW_SEQUENCE = [
   ["question"],
   ["prompt"],
   ["answer"],
-  ["insights"],
   ["evidence"],
+  ["terms"],
+  ["claims"],
   ["abstracts"],
   ["metastudyQuestion"],
   ["metastudyAbstract"],
@@ -1213,24 +1214,23 @@ const buildAbstractTabsNode = ({ id, position, flow }) => {
   return node;
 };
 
-const buildInsightsNode = ({ id, position, flow }) => {
+const buildTermsNode = ({ id, position, flow }) => {
   const papers = getFlowPapers(flow);
   const { node, body, setSummary } = createNodeShell({
     id,
-    label: "Synthesis",
-    title: "Terms & Claims",
+    label: "Artifact",
+    title: "Term Highlights",
     x: position.x,
     y: position.y,
-    lane: "answers",
+    lane: "artifacts",
   });
-  node.classList.add("node--answer");
+  node.classList.add("node--artifact");
 
   const abstracts = papers.map((paper) => paper.abstract).filter(Boolean);
   const topTerms = getTopTerms(abstracts);
-  const claims = extractClaims(papers);
   const summaryText = topTerms.length
     ? `Top terms: ${topTerms.slice(0, 3).join(", ")}`
-    : "Awaiting synthesized insights";
+    : "No salient terminology extracted yet.";
   setSummary(truncateText(summaryText, 120));
 
   const chipContainer = document.createElement("div");
@@ -1242,37 +1242,68 @@ const buildInsightsNode = ({ id, position, flow }) => {
     chipContainer.append(chip);
   });
 
-  const claimContainer = document.createElement("div");
-  claimContainer.className = "claims";
+  if (!topTerms.length) {
+    const placeholder = document.createElement("p");
+    placeholder.textContent = "No salient terminology extracted. Review abstracts manually.";
+    placeholder.style.margin = 0;
+    placeholder.style.color = "var(--text-secondary)";
+    body.append(placeholder);
+  }
+
+  body.append(chipContainer);
+  return node;
+};
+
+const buildClaimsNode = ({ id, position, flow }) => {
+  const papers = getFlowPapers(flow);
+  const { node, body, setSummary } = createNodeShell({
+    id,
+    label: "Artifact",
+    title: "Claim Highlights",
+    x: position.x,
+    y: position.y,
+    lane: "artifacts",
+  });
+  node.classList.add("node--artifact");
+
+  const claims = extractClaims(papers);
+  const summaryText = claims.length
+    ? `${claims.length} extracted claims`
+    : "Awaiting claim extraction";
+  setSummary(truncateText(summaryText, 120));
 
   if (!claims.length) {
     const placeholder = document.createElement("p");
     placeholder.textContent = "No explicit claims detected. Flag abstracts for manual review.";
     placeholder.style.margin = 0;
     placeholder.style.color = "var(--text-secondary)";
-    claimContainer.append(placeholder);
-  } else {
-    claims.forEach((claim) => {
-      const box = document.createElement("article");
-      box.className = "claim";
-
-      const meta = document.createElement("div");
-      meta.className = "claim__meta";
-      meta.textContent = claim.source;
-
-      const text = document.createElement("p");
-      text.style.margin = 0;
-      text.innerHTML = claim.text.replace(
-        new RegExp(claim.highlight, "i"),
-        (match) => `<strong>${match}</strong>`
-      );
-
-      box.append(meta, text);
-      claimContainer.append(box);
-    });
+    body.append(placeholder);
+    return node;
   }
 
-  body.append(chipContainer, claimContainer);
+  const claimContainer = document.createElement("div");
+  claimContainer.className = "claims";
+
+  claims.forEach((claim) => {
+    const box = document.createElement("article");
+    box.className = "claim";
+
+    const meta = document.createElement("div");
+    meta.className = "claim__meta";
+    meta.textContent = claim.source;
+
+    const text = document.createElement("p");
+    text.style.margin = 0;
+    text.innerHTML = claim.text.replace(
+      new RegExp(claim.highlight, "i"),
+      (match) => `<strong>${match}</strong>`
+    );
+
+    box.append(meta, text);
+    claimContainer.append(box);
+  });
+
+  body.append(claimContainer);
   return node;
 };
 
@@ -1292,17 +1323,18 @@ const createInquiryFlow = (flow, index = flows.length) => {
     question: { x: columnLeftX, y: rowY(0) },
     prompt: { x: columnLeftX, y: rowY(1) },
     answer: { x: columnMiddleX, y: rowY(2) },
-    insights: { x: columnMiddleX, y: rowY(3) },
-    evidence: { x: columnRightX, y: rowY(4) },
-    abstracts: { x: columnRightX, y: rowY(5) },
-    metastudyQuestion: { x: columnLeftX, y: rowY(6) },
-    metastudyAbstract: { x: columnMiddleX, y: rowY(7) },
-    metastudyMarkdown: { x: columnMiddleX, y: rowY(8) },
-    metastudy: { x: columnRightX, y: rowY(9) },
-    terpStudyQuestion: { x: columnLeftX, y: rowY(10) },
-    terpStudyAbstract: { x: columnMiddleX, y: rowY(11) },
-    terpStudyMarkdown: { x: columnMiddleX, y: rowY(12) },
-    terpStudy: { x: columnRightX, y: rowY(13) },
+    evidence: { x: columnRightX, y: rowY(3) },
+    terms: { x: columnRightX, y: rowY(4) },
+    claims: { x: columnRightX, y: rowY(5) },
+    abstracts: { x: columnRightX, y: rowY(6) },
+    metastudyQuestion: { x: columnLeftX, y: rowY(7) },
+    metastudyAbstract: { x: columnMiddleX, y: rowY(8) },
+    metastudyMarkdown: { x: columnMiddleX, y: rowY(9) },
+    metastudy: { x: columnRightX, y: rowY(10) },
+    terpStudyQuestion: { x: columnLeftX, y: rowY(11) },
+    terpStudyAbstract: { x: columnMiddleX, y: rowY(12) },
+    terpStudyMarkdown: { x: columnMiddleX, y: rowY(13) },
+    terpStudy: { x: columnRightX, y: rowY(14) },
   };
 
   const flowRecord = { id: flowId, data: flow, nodes: {} };
@@ -1346,9 +1378,15 @@ const createInquiryFlow = (flow, index = flows.length) => {
       flow,
     });
 
-    const insightsNode = buildInsightsNode({
-      id: `${flowId}-insights`,
-      position: layout.insights,
+    const termsNode = buildTermsNode({
+      id: `${flowId}-terms`,
+      position: layout.terms,
+      flow,
+    });
+
+    const claimsNode = buildClaimsNode({
+      id: `${flowId}-claims`,
+      position: layout.claims,
       flow,
     });
 
@@ -1367,22 +1405,25 @@ const createInquiryFlow = (flow, index = flows.length) => {
     flowRecord.nodes = {
       question: questionNode.id,
       prompt: promptNode.id,
-    answer: answerNode.id,
+      answer: answerNode.id,
       evidence: evidenceNode.id,
+      terms: termsNode.id,
+      claims: claimsNode.id,
       abstracts: abstractsNode.id,
-      insights: insightsNode.id,
       metastudy: metastudyNode.id,
       terpStudy: terpStudyNode.id,
     };
 
-      connectNodes(questionNode.id, promptNode.id, flowId);
-      connectNodes(promptNode.id, answerNode.id, flowId);
-      connectNodes(answerNode.id, insightsNode.id, flowId);
-      connectNodes(answerNode.id, evidenceNode.id, flowId);
-      connectNodes(insightsNode.id, metastudyNode.id, flowId);
-      connectNodes(evidenceNode.id, abstractsNode.id, flowId);
-      connectNodes(metastudyNode.id, terpStudyNode.id, flowId);
-      connectNodes(abstractsNode.id, terpStudyNode.id, flowId);
+    connectNodes(questionNode.id, promptNode.id, flowId);
+    connectNodes(promptNode.id, answerNode.id, flowId);
+    connectNodes(answerNode.id, evidenceNode.id, flowId);
+    connectNodes(answerNode.id, termsNode.id, flowId);
+    connectNodes(answerNode.id, claimsNode.id, flowId);
+    connectNodes(evidenceNode.id, termsNode.id, flowId);
+    connectNodes(termsNode.id, claimsNode.id, flowId);
+    connectNodes(claimsNode.id, abstractsNode.id, flowId);
+    connectNodes(abstractsNode.id, metastudyNode.id, flowId);
+    connectNodes(metastudyNode.id, terpStudyNode.id, flowId);
 
   };
 
