@@ -189,11 +189,11 @@ const ROW_SEQUENCE = [
   ["terpStudyMarkdown"],
   ["terpStudy"],
 ];
-const ROW_GAP = 64;
-const ROW_BASE_OFFSET = 120;
-const FLOW_GAP = 180;
-const CANVAS_TOP_PADDING = 140;
-const CANVAS_BOTTOM_PADDING = 200;
+const ROW_GAP = 140;
+const ROW_BASE_OFFSET = 140;
+const FLOW_GAP = 240;
+const CANVAS_TOP_PADDING = 160;
+const CANVAS_BOTTOM_PADDING = 260;
 let pendingLayoutFrame = null;
 
 const STOP_WORDS = new Set(
