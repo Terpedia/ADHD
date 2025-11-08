@@ -154,6 +154,8 @@ const LANE_INDEX = {
   answers: 1,
   artifacts: 2,
 };
+const LANE_NODE_HORIZONTAL_PADDING = 64;
+const LANE_NODE_MIN_WIDTH = 260;
 const NODE_LANES = {
   question: "questions",
   prompt: "questions",
@@ -358,21 +360,15 @@ const alignNodeToLane = (node, laneName) => {
   const canvasRect = canvas.getBoundingClientRect();
   const laneRect = lane.getBoundingClientRect();
   const centerX = laneRect.left - canvasRect.left + laneRect.width / 2;
-  const laneWidth = laneRect.width;
+  const availableWidth = Math.max(
+    LANE_NODE_MIN_WIDTH,
+    laneRect.width - LANE_NODE_HORIZONTAL_PADDING
+  );
 
-  const computed = getComputedStyle(node);
-  const currentWidth = node.offsetWidth || parseFloat(computed.width) || laneWidth;
-  const gutter = 32;
-  const maxWidth = Math.max(160, laneWidth - gutter);
-  const targetWidth = Math.min(currentWidth, maxWidth);
+  node.style.maxWidth = `${availableWidth}px`;
+  node.style.width = `${availableWidth}px`;
 
-  if (!Number.isNaN(targetWidth) && targetWidth > 0) {
-    node.style.maxWidth = `${maxWidth}px`;
-    node.style.width = `${targetWidth}px`;
-  }
-
-  const finalWidth = node.offsetWidth || targetWidth;
-  const position = Math.max(0, centerX - finalWidth / 2);
+  const position = Math.max(0, centerX - availableWidth / 2);
   node.style.left = `${position}px`;
 };
 
