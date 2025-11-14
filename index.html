@@ -138,28 +138,68 @@
         },
       ]
 
-      const Slide = ({ slide, index, total }) => (
-        <section className="deck__slide" role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${total}`}>
-          <header className="deck__slide-header">
-            <p className="deck__slide-count">{index + 1} / {total}</p>
-            <h2>{slide.title}</h2>
-          </header>
-          <ul>
-              {slide.content.map((item) => {
-                if (typeof item === 'string') {
-                  return <li key={item.slice(0, 60)}>{item}</li>
-                }
-                const key = item.text ?? item.href
-                return (
-                  <li key={key}>
-                    <a href={item.href}>{item.text}</a>
-                    {item.note ? <span className="deck__link-note"> – {item.note}</span> : null}
-                  </li>
-                )
-              })}
-          </ul>
-        </section>
-      )
+        const toPoint = (item) => {
+          if (typeof item === 'string') {
+            const splitIndex = item.indexOf(':')
+            if (splitIndex > 0 && splitIndex < item.length - 1) {
+              return {
+                type: 'text',
+                label: item.slice(0, splitIndex).trim(),
+                body: item.slice(splitIndex + 1).trim(),
+              }
+            }
+            return { type: 'text', body: item }
+          }
+
+          if (item && typeof item === 'object' && item.href) {
+            const text = item.text ?? ''
+            const dotIndex = text.indexOf('·')
+            const label = dotIndex > 0 ? text.slice(0, dotIndex).trim() : undefined
+            const title = dotIndex > 0 ? text.slice(dotIndex + 1).trim() : text.trim()
+            return {
+              type: 'link',
+              label,
+              body: title,
+              href: item.href,
+              note: item.note,
+            }
+          }
+
+          return { type: 'text', body: String(item ?? '') }
+        }
+
+        const Slide = ({ slide, index, total }) => {
+          const points = slide.content.map(toPoint)
+
+          return (
+            <section className="deck__slide" role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${total}`}>
+              <header className="deck__slide-header">
+                <p className="deck__slide-count">{index + 1} / {total}</p>
+                <h2>{slide.title}</h2>
+              </header>
+              <div className="deck__slide-points">
+                {points.map((point, idx) => {
+                  const key = `${point.label ?? point.body}-${idx}`
+                  return (
+                    <article className="deck__point" key={key}>
+                      {point.label ? <p className="deck__point-label">{point.label}</p> : null}
+                      <p className="deck__point-body">
+                        {point.type === 'link' ? (
+                          <>
+                            <a href={point.href}>{point.body}</a>
+                            {point.note ? <span className="deck__point-note"> – {point.note}</span> : null}
+                          </>
+                        ) : (
+                          point.body
+                        )}
+                      </p>
+                    </article>
+                  )
+                })}
+              </div>
+            </section>
+          )
+        }
 
       const Deck = () => {
         const [active, setActive] = useState(0)
