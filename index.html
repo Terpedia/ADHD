@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Focus On Focus | Terpedia ADHD Inquiry</title>
+    <title>Focus on Focus</title>
     <link rel="stylesheet" href="styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,54 +16,185 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/computer-modern@0.1.2/index.min.css" />
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   </head>
-  <body data-commit-label="" data-commit-branch="main">
-    <div class="build-badge" role="status" aria-live="polite">
-      <span class="build-badge__commit" data-role="commit-label">Syncing commit…</span>
-      <span class="build-badge__separator">•</span>
-      <span class="build-badge__time" data-role="timestamp">--:--</span>
-    </div>
-    <a
-      class="colab-badge"
-      href="https://colab.research.google.com/github/dcmcshan/ADHD/blob/main/ADHD.ipynb"
-      target="_blank"
-      rel="noopener"
-      aria-label="Open ADHD notebook in Google Colab"
-    >
-      <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab badge" />
-    </a>
-    <main class="workspace workspace--lanes" id="workspace">
-      <header class="workspace__header">
-        <div class="workspace__heading">
-          <p class="workspace__eyebrow">Terpedia Inquiry Graph</p>
-          <h1 class="workspace__title">Focus On Focus</h1>
-        </div>
-        <div class="workspace__actions">
-          <button id="new-flow-button" class="workspace__action" type="button">
-            + Add Inquiry Lane
-          </button>
-        </div>
-      </header>
+  <body>
+    <div id="root"></div>
 
-      <section class="workspace__board" aria-label="Inquiry workflow lanes">
-          <div id="canvas" class="canvas" role="region" aria-label="Three-lane inquiry workspace">
-            <div class="canvas__lanes" aria-hidden="true">
-              <div class="canvas__lane">
-                <span class="canvas__lane-label">Questions</span>
-              </div>
-              <div class="canvas__lane">
-                <span class="canvas__lane-label">Answers</span>
-              </div>
-              <div class="canvas__lane">
-                <span class="canvas__lane-label">Artifacts</span>
-              </div>
-          </div>
-        </div>
-      </section>
-    </main>
+    <script type="text/babel">
+      const { useState, useEffect } = React
 
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/2.15.6/js/jsplumb.min.js"></script>
-    <script type="module" src="scripts/main.js"></script>
+        const slides = [
+        {
+          title: 'Focus on Focus · Research Program',
+          content: [
+            'Hypothesis: Terpedia can generate publication-quality meta-studies and focused research studies.',
+            'Program outcomes: ADHD evidence metastudy, terpene-focused experimental study, and a Terpedia workflow white paper.',
+            'Audience: Clinicians, product formulators, evidence reviewers, and platform partners.',
+          ],
+        },
+        {
+          title: 'Scientific Article 1 · ADHD Metastudy',
+          content: [
+              'Scope: Aggregate randomized and observational ADHD interventions across CBT, pharmacology, neuromodulation, and adjunctive protocols.',
+              'Analyses: Normalize outcome instruments, compute pooled effect sizes (Hedges g, OR), heterogeneity diagnostics, and moderator models.',
+              'Deliverable: Publication-ready manuscript with linked artifact `ADHD.md` generated via Terpedia plus editorial QA.',
+              {
+                text: 'Methodology reference · Meta-Methods playbook',
+                href: 'meta-methods.html',
+                note: 'Protocol registration, extraction templates, AI/human division of labor.',
+              },
+          ],
+        },
+        {
+          title: 'Scientific Article 2 · Terpene Focused Study',
+          content: [
+              'Objective: Quantify terpene-driven improvements in sustained attention and executive function.',
+              'Design: 12-week cohort comparing terpene-rich formulation vs. control; endpoints include n-back, EEG beta synchrony, clinician-rated focus.',
+              'Deliverable: Targeted study dossier captured in `ADHD_Terpenes.md`, iterated with Terpedia’s question composer and evidence panels.',
+              {
+                text: 'Methodology reference · Study Methods protocol',
+                href: 'study-methods.html',
+                note: 'Eligibility framework, extraction schema, meta-regression plan.',
+              },
+          ],
+        },
+        {
+          title: 'White Paper · Terpedia for Scientific Generation',
+          content: [
+            'Narrative: Document the Terpedia pipeline from question registry to AI drafting, editorial review, and artifact publishing.',
+            'Sections: Inquiry graph modeling, prompt architecture, persona orchestration, human-in-the-loop verification, reproducibility practices.',
+              'Call-to-action: Position Terpedia as a co-authoring environment for research teams seeking transparent AI assistance.',
+              {
+                text: 'Reference · Meta-Methods playbook',
+                href: 'meta-methods.html',
+                note: 'Umbrella-review pipeline, PROSPERO draft, AI/human checkpoints.',
+              },
+              {
+                text: 'Reference · Study Methods protocol',
+                href: 'study-methods.html',
+                note: 'Terpene-focused study design, eligibility, extraction, analyses.',
+              },
+          ],
+        },
+        {
+          title: 'Data & Evidence Acquisition',
+          content: [
+            'Primary sources: PubMed, CrossRef-linked neuropharmacology and behavioral journals, formulation stability studies.',
+            'Ingestion: Semi-automated retrieval with manual screening for ADHD relevance and terpene mechanistic depth.',
+            'Metadata: Cohort demographics, intervention protocols, dosing, outcome instruments, biomarkers, study quality signals.',
+          ],
+        },
+        {
+          title: 'Prompt & Persona Strategy',
+          content: [
+            'Briefing prompt (230 words): Rapid situational awareness for new hypotheses and team synchronization.',
+            'Metastudy prompt (850 words): Structured sections covering scope, evidence synthesis, mechanisms, and implementation considerations with explicit citation targets.',
+            'Targeted Study prompt (600 words): Operational planning with decision gates, instrumentation, safety checkpoints, and evaluation metrics.',
+          ],
+        },
+        {
+          title: 'Publication Roadmap',
+          content: [
+            'Target journals: Journal of Attention Disorders, Neuropharmacology, Frontiers in Behavioral Neuroscience, Journal of Integrative Medicine.',
+            'Submission prep: Align manuscripts with author guidelines, register preprints, and capture reviewer response matrices inside Terpedia.',
+            'White paper dissemination: Host on Terpedia Research, cross-post to arXiv or PsyArXiv, and brief partner networks.',
+          ],
+        },
+        {
+          title: 'Product Design Initiative',
+          content: [
+            'Outcome: Terpedia-designed “Focus on Focus” product blueprint derived from ADHD metastudy findings.',
+            'Components: Evidence-backed terpene ratios, delivery format decisions, regulatory documentation, and go-to-market plan.',
+            'Action: Dedicated product page (`product.html`) with research summary, formulation highlights, and purchase flow hook.',
+          ],
+        },
+        {
+          title: 'Editorial & Compliance Workflow',
+          content: [
+            'Review loop: Subject-matter experts validate AI drafts, annotate evidence, and enforce citation integrity.',
+            'Versioning: Each revision stored in Terpedia with diffs, commit notes, and provenance tags.',
+            'Readiness checks: Statistical review, ethics and safety sign-off, product feasibility assessment prior to publication.',
+          ],
+          },
+          {
+            title: 'Workflow Resources',
+            content: [
+              {
+                text: 'Meta-Methods · ADHD Umbrella Review & Terpene Meta-Analysis',
+                href: 'meta-methods.html',
+              },
+              {
+                text: 'Study Methods · Terpedia ADHD Terpene Focus Protocol',
+                href: 'study-methods.html',
+              },
+              {
+                text: 'Interactive Inquiry Workspace',
+                href: 'inquiro.html',
+              },
+            ],
+        },
+      ]
+
+      const Slide = ({ slide, index, total }) => (
+        <section className="deck__slide" role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${total}`}>
+          <header className="deck__slide-header">
+            <p className="deck__slide-count">{index + 1} / {total}</p>
+            <h2>{slide.title}</h2>
+          </header>
+          <ul>
+              {slide.content.map((item) => {
+                if (typeof item === 'string') {
+                  return <li key={item.slice(0, 60)}>{item}</li>
+                }
+                const key = item.text ?? item.href
+                return (
+                  <li key={key}>
+                    <a href={item.href}>{item.text}</a>
+                    {item.note ? <span className="deck__link-note"> – {item.note}</span> : null}
+                  </li>
+                )
+              })}
+          </ul>
+        </section>
+      )
+
+      const Deck = () => {
+        const [active, setActive] = useState(0)
+        const total = slides.length
+
+        const next = () => setActive((prev) => (prev + 1) % total)
+        const prev = () => setActive((prev) => (prev - 1 + total) % total)
+
+        useEffect(() => {
+          const handler = (event) => {
+            if (event.key === 'ArrowRight') next()
+            if (event.key === 'ArrowLeft') prev()
+          }
+          window.addEventListener('keydown', handler)
+          return () => window.removeEventListener('keydown', handler)
+        }, [total])
+
+        return (
+          <main className="deck">
+            <header className="deck__header">
+              <h1>Focus on Focus · Terpedia Research Roadmap</h1>
+              <p>
+                Reviewing the research plan to validate that Terpedia can autonomously draft publication-quality meta-analyses, targeted studies, and supporting product evidence.
+              </p>
+            </header>
+            <Slide slide={slides[active]} index={active} total={total} />
+            <footer className="deck__footer">
+              <button type="button" onClick={prev} aria-label="Previous slide">Previous</button>
+              <button type="button" onClick={next} aria-label="Next slide">Next</button>
+            </footer>
+          </main>
+        )
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(<Deck />)
+    </script>
   </body>
 </html>

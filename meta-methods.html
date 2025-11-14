@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meta-Methods · ADHD Evidence Engine</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Economica:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/computer-modern@0.1.2/index.min.css" />
+  </head>
+  <body>
+    <main class="meta-methods">
+      <header class="meta-methods__header">
+        <h1>Meta-Methods · ADHD Umbrella Review &amp; Terpene Meta-Analysis</h1>
+        <p>
+          This methods handbook explains how AI scaffolds each phase of the Terpedia evidence engine—from
+          protocol registration through synthesis—while highlighting the human oversight that safeguards
+          rigor. It bundles templates, scripts, and governance artifacts so the workflow can be reproduced
+          or audited end-to-end.
+        </p>
+      </header>
+
+      <section class="meta-methods__section">
+        <h2>End-to-End Workflow</h2>
+        <p>
+          The pipeline orchestrates six sequential phases, surrounded by PROSPERO governance. AI-generated
+          artifacts (search strings, extraction sheets, R scripts) keep the process consistent, while
+          human reviewers deliver critical judgments on study inclusion, risk of bias, and interpretation.
+        </p>
+        <div class="meta-methods__graph mermaid">
+flowchart TD
+
+%% PROTOCOL
+  subgraph S0[Protocol & Governance]
+    G1[PROSPERO Registration\nProtocol text\n(assisted by AI)]
+  end
+
+%% PHASE 1
+  subgraph S1[Search & Ingest]
+    A1[AI Assistant\n(ChatGPT etc.)\n- Drafts search strings\n- Designs templates] 
+    A2[Databases\nPubMed, Embase,\nPsycINFO, Cochrane, WoS]
+    A3[Reference Manager\nZotero / EndNote]
+    A1 --> A2
+    A2 -->|export RIS/BibTeX| A3
+  end
+
+%% PHASE 2
+  subgraph S2[Screen & Select Studies]
+    B1[Screening Tool\nRayyan / Covidence]
+    B2[Title/Abstract Screening\n2 human reviewers]
+    B3[Full-Text Screening\n2 human reviewers]
+    B4[PRISMA Counts\n(flow diagram data)]
+    A3 -->|deduped refs| B1
+    B1 --> B2 --> B3 --> B4
+  end
+
+%% PHASE 3
+  subgraph S3[Classify & Split Evidence]
+    C1[Included Meta-analyses\n(ADHD interventions)]
+    C2[Included RCTs\n(Terpenes & others)]
+    B3 -->|meta-analyses| C1
+    B3 -->|RCTs (terpenes)| C2
+  end
+
+%% PHASE 4
+  subgraph S4[Extract & Store Data]
+    D1[Extraction Templates\n- extraction_meta_analyses.csv\n- extraction_terpene_rcts.csv\n(AI-generated)]
+    D2[Data Entry\nREDCap / Google Sheets]
+    D3[Clean CSVs in Repo\n/data/*.csv]
+    D4[Quality Assessment\nAMSTAR 2, RoB 2\n(amstar2_meta_analyses.csv,\nrob2_terpene_rcts.csv)]
+    A1 --> D1
+    C1 --> D2
+    C2 --> D2
+    D2 --> D3
+    D2 --> D4
+  end
+
+%% PHASE 5
+  subgraph S5[Analyze]
+    E1[R Scripts\n(meta_analysis.R)\nmetafor, dplyr, readr]
+    E2[De Novo Meta-analyses\nSMDs, CIs, I^2, prediction intervals]
+    E3[Plots\nForest/Funnel PDFs\n/figures/*.pdf]
+    D3 --> E1
+    D4 --> E1
+    E1 --> E2 --> E3
+  end
+
+%% PHASE 6
+  subgraph S6[Synthesize, Publish & Integrate]
+    F1[AI Assistant\n- Drafts methods/results\n- Composes figure + table captions]
+    F2[Manuscript\nNature-style umbrella review]
+    F3[Project Repo\nGitHub / OSF\n(code + data + figs)]
+    F4[Terpedia Content\nADHD.md, ADHD_Terpenes.md\nproduct.html integration]
+    E2 --> F1
+    E3 --> F1
+    F1 --> F2
+    D3 --> F3
+    E1 --> F3
+    E3 --> F3
+    F2 --> F4
+    E2 --> F4
+  end
+
+  G1 --> S2
+  G1 --> S4
+  G1 --> S5
+</div>
+        </section>
+
+        <section class="meta-methods__section meta-methods__section--prospero">
+          <h2>PROSPERO Registration (Ready to Submit)</h2>
+          <div class="meta-methods__prospero-grid">
+            <article>
+              <h3>Core Information</h3>
+              <ul>
+                <li><strong>Review title:</strong> Attention and Executive Function in ADHD: An Umbrella Review of Meta-Analyses and De Novo Meta-Analysis of Terpene Interventions.</li>
+                <li><strong>Original language title:</strong> Same as above.</li>
+              <li><strong>Anticipated start:</strong> 14 November 2025 (update to actual timeline).</li>
+              <li><strong>Anticipated completion:</strong> 30 June 2026 (adjust as needed).</li>
+              <li><strong>Stage at submission:</strong> Question &amp; eligibility finalized; search drafted; extraction not yet started.</li>
+              <li><strong>Principal contact:</strong> Daniel McShan, PhD · Terpedia, LLC · (email) · United States.</li>
+              <li><strong>Team members:</strong> Lead author (design/analysis), screening/extraction assistant(s), statistician, senior reviewer, additional contributors TBD.</li>
+              <li><strong>Funding:</strong> Internal Terpedia, LLC R&amp;D resources; no external funding.</li>
+              <li><strong>Conflicts:</strong> No financial conflicts; academic/commercial interest in terpene cognition disclosed.</li>
+              <li><strong>Review type:</strong> “Umbrella review and de novo meta-analysis”.</li>
+              <li><strong>Registration portal:</strong> <a href="https://www.crd.york.ac.uk/prospero/" target="_blank" rel="noreferrer">PROSPERO international prospective register</a>.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Scope &amp; Eligibility</h3>
+              <ul>
+                <li><strong>Primary question:</strong> How effective are ADHD intervention classes (pharmacological, behavioral, neurofeedback, cognitive training, sleep, nutritional, terpenes) at improving attention/executive outcomes?</li>
+                <li><strong>Sub-question:</strong> What is the pooled attentional effect of terpene/natural-compound interventions in randomized trials?</li>
+              <li><strong>Searches:</strong> <a href="https://pubmed.ncbi.nlm.nih.gov/" target="_blank" rel="noreferrer">PubMed</a>, <a href="https://www.embase.com/" target="_blank" rel="noreferrer">Embase</a>, <a href="https://www.apa.org/pubs/databases/psycinfo" target="_blank" rel="noreferrer">PsycINFO</a>, <a href="https://www.webofscience.com/" target="_blank" rel="noreferrer">Web of Science</a>, <a href="https://www.cochranelibrary.com/" target="_blank" rel="noreferrer">Cochrane Library</a>; controlled terms + keywords; reference list hand-searching; no language limits.</li>
+              <li><strong>Population:</strong> <a href="https://www.psychiatry.org/psychiatrists/practice/dsm" target="_blank" rel="noreferrer">DSM</a>/<a href="https://icd.who.int/" target="_blank" rel="noreferrer">ICD</a>-diagnosed ADHD across children, adolescents, adults, and mixed-age cohorts.</li>
+              <li><strong>Interventions:</strong> Stimulants, non-stimulants, behavioral therapies, neurofeedback, cognitive training, sleep interventions, nutritional strategies, terpenes (limonene, pinene, linalool, β-caryophyllene, etc.).</li>
+                <li><strong>Comparators:</strong> Placebo, treatment-as-usual, waitlist, active controls.</li>
+                <li><strong>Included designs:</strong> Meta-analyses of RCTs/quasi-RCTs (umbrella); RCTs/quasi-RCTs with terpene interventions reporting attention/executive outcomes (de novo analysis).</li>
+                <li><strong>Primary outcome:</strong> Objective attention/executive tests (CPT/TOVA, Go/No-Go, Stroop, N-back, Trail Making, working memory) or validated rating scales, synthesized as SMD (Hedges g).</li>
+                <li><strong>Secondary outcomes:</strong> Neuropsychological subdomains, attention symptom ratings, follow-up durability, adverse events (when reported).</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Methods &amp; Dissemination</h3>
+              <ul>
+                <li><strong>Data extraction:</strong> Two reviewers capture study details, effect sizes, heterogeneity indices, AMSTAR 2 / RoB 2 judgments; disagreements resolved by consensus or third reviewer.</li>
+              <li><strong>Risk of bias:</strong> <a href="https://www.bmj.com/content/358/bmj.j4008" target="_blank" rel="noreferrer">AMSTAR 2</a> for meta-analyses; <a href="https://www.riskofbias.info/welcome/rob-2-0-tool" target="_blank" rel="noreferrer">Cochrane RoB 2</a> for RCTs (randomization, deviations, missing data, measurement, reporting).</li>
+              <li><strong>Data synthesis:</strong> Umbrella effect sizes summarized descriptively (no re-pooling overlapping trials); terpene RCTs pooled with REML random-effects; heterogeneity via I² and prediction intervals; publication bias assessed via funnel plots/Egger when ≥10 studies.</li>
+                <li><strong>Planned subgroups:</strong> Age (child vs adult), treatment duration (acute vs extended), outcome modality (objective vs rating), terpene compound, delivery route (inhaled vs oral).</li>
+                <li><strong>Dissemination:</strong> Target journals (Nature Mental Health, Lancet Psychiatry, JCPP); data/code released to OSF or GitHub; Terpedia knowledge-base updates and lay summaries.</li>
+                <li><strong>Keywords:</strong> ADHD, attention, executive function, meta-analysis, umbrella review, terpenes, limonene, pinene, linalool, caryophyllene, neurofeedback, cognitive training, stimulants, atomoxetine, omega-3.</li>
+              </ul>
+            </article>
+          </div>
+          <p class="meta-methods__prospero-note">
+            Paste this draft into PROSPERO and update dates, team members, affiliations, and contact details before submission.
+          </p>
+        </section>
+
+        <section class="meta-methods__section">
+          <h2>Next Steps &amp; Automation Ideas</h2>
+          <ul>
+            <li>Generate PRISMA diagrams (Mermaid/TikZ) directly from screening exports.</li>
+            <li>Create Python utilities to detect overlapping RCTs across meta-analyses and flag duplicates.</li>
+            <li>Extend <code>meta_analysis.R</code> with meta-regressions (compound, age group, duration) and narrative outputs.</li>
+            <li>Draft a statistical analysis plan (SAP) supplement to accompany journal submissions.</li>
+            <li>Integrate Terpedia approval checkpoints so AI-authored edits require human sign-off.</li>
+          </ul>
+        </section>
+
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+      mermaid.initialize({ startOnLoad: true, theme: "dark" });
+    </script>
+  </body>
+</html>
+      <section class="meta-methods__section meta-methods__section--two-col">
+        <h2>AI Enablement vs. Human Oversight</h2>
+        <div class="meta-methods__grid">
+          <article>
+            <h3>AI lifts the scaffolding</h3>
+            <ul>
+              <li>Drafts reproducible database search strings and keeps Boolean logic harmonized.</li>
+              <li>Generates deduplication-ready RIS/BibTeX export templates and shared screening labels.</li>
+              <li>Produces extraction CSV schemas tailored to meta-analyses and terpene RCT statistics.</li>
+              <li>Writes extensible <code>metafor</code> scripts for pooled effects, subgroup models, and QA charts.</li>
+              <li>Pre-populates AMSTAR 2 and RoB 2 checklists so humans record decisions consistently.</li>
+              <li>Outputs PRISMA diagrams, README scaffolds, and Mermaid/TikZ documentation.</li>
+            </ul>
+          </article>
+          <article>
+            <h3>Humans guard the judgment calls</h3>
+            <ul>
+              <li>Resolve inclusion/exclusion disagreements during dual screening.</li>
+              <li>Interpret ambiguous methodology or incomplete reporting in legacy trials.</li>
+              <li>Make final risk-of-bias determinations (AI suggestions logged but not definitive).</li>
+              <li>Write the narrative discussion, contextualizing statistics against clinical realities.</li>
+              <li>Approve any updates pushed to Terpedia, OSF, or journal submissions.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="meta-methods__section">
+        <h2>Phase-by-Phase Guidance</h2>
+        <article class="meta-methods__card">
+          <h3>Phase 1 · Search &amp; Ingest</h3>
+          <p>
+            AI generates draft search blocks for ADHD, attention/executive outcomes, intervention classes,
+            and trial descriptors. Researchers review and execute in PubMed, Embase, PsycINFO, Web of
+            Science, and Cochrane. Exports land in Zotero/EndNote for deduplication.
+          </p>
+        </article>
+        <article class="meta-methods__card">
+          <h3>Phase 2 · Screening</h3>
+          <p>
+            Deduplicated citations are uploaded to Rayyan/Covidence. Two reviewers independently screen
+            titles/abstracts, then full texts. PRISMA counts are logged automatically for downstream flow
+            diagrams.
+          </p>
+        </article>
+        <article class="meta-methods__card">
+          <h3>Phase 3 · Classification</h3>
+          <p>
+            Included studies bifurcate into existing meta-analyses and de novo RCTs (with terpene studies
+            called out). AI tags duplicates and alerts reviewers to overlapping data across meta-analyses.
+          </p>
+        </article>
+        <article class="meta-methods__card">
+          <h3>Phase 4 · Extraction &amp; Storage</h3>
+          <p>
+            AI-provided CSV templates capture study identifiers, sample sizes, outcome metrics, and
+            variance parameters. QA instruments (AMSTAR 2, RoB 2) are pre-filled with dropdowns. Cleaned
+            outputs are versioned under <code>/data</code>.
+          </p>
+        </article>
+        <article class="meta-methods__card">
+          <h3>Phase 5 · Analysis</h3>
+          <p>
+            The <code>analysis/meta_analysis.R</code> script loads curated CSV files, computes SMDs, runs
+            REML random-effects models, and exports forest/funnel plots. Analysts can uncomment sections
+            for additional intervention classes or meta-regressions.
+          </p>
+        </article>
+        <article class="meta-methods__card">
+          <h3>Phase 6 · Synthesis &amp; Publication</h3>
+          <p>
+            AI drafts the methods/results narrative, figure captions, and Terpedia knowledge-base updates.
+            Humans finalize text, approve repo releases, and coordinate submissions to journals and OSF.
+          </p>
+        </article>
+      </section>
+
+      <section class="meta-methods__section">
+        <h2>Template Pack</h2>
+        <article class="meta-methods__card">
+          <h3>Meta-analysis extraction (<code>data/extraction_meta_analyses.csv</code>)</h3>
+          <pre><code>meta_id,first_author,year,journal,intervention_class,intervention_details,age_group,diagnostic_criteria,n_trials,n_participants,primary_outcome,outcome_type,pooled_effect,pooled_effect_ci_lower,pooled_effect_ci_upper,effect_direction,higher_scores_better,model_type,i2,tau2,publication_bias_test,publication_bias_p,amstar2_overall,notes</code></pre>
+        </article>
+        <article class="meta-methods__card">
+          <h3>Terpene RCT extraction (<code>data/extraction_terpene_rcts.csv</code>)</h3>
+          <pre><code>trial_id,first_author,year,journal,country,age_group,diagnostic_criteria,n_terpene,n_control,compound_name,compound_purity,route,dose_mg_per_day,treatment_duration_weeks,control_type,cointerventions,primary_outcome,primary_outcome_type,mean_terpene_post,sd_terpene_post,mean_control_post,sd_control_post,mean_terpene_pre,sd_terpene_pre,mean_control_pre,sd_control_pre,followup_timepoint_weeks,mean_terpene_followup,sd_terpene_followup,mean_control_followup,sd_control_followup,rob2_randomization,rob2_deviations,rob2_missing,rob2_measurement,rob2_reporting,rob2_overall,notes</code></pre>
+        </article>
+        <article class="meta-methods__card">
+          <h3>Quality assessment sheets</h3>
+          <p><strong>AMSTAR 2 (<code>data/amstar2_meta_analyses.csv</code>)</strong></p>
+          <pre><code>meta_id,first_author,year,amstar2_q1,...,amstar2_q14,amstar2_overall,notes</code></pre>
+          <p><strong>RoB 2 (<code>data/rob2_terpene_rcts.csv</code>)</strong></p>
+          <pre><code>trial_id,first_author,year,rob2_randomization,rob2_deviations,rob2_missing,rob2_measurement,rob2_reporting,rob2_overall,notes</code></pre>
+        </article>
+      </section>
+
+      <section class="meta-methods__section">
+        <h2><code>analysis/meta_analysis.R</code></h2>
+        <pre><code class="language-r"># install.packages("metafor") # run once
+library(metafor)
+library(dplyr)
+library(readr)
+
+# 1. Load data -------------------------------------------------------------
+meta_data   <- read_csv("data/extraction_meta_analyses.csv")
+terpene_rct <- read_csv("data/extraction_terpene_rcts.csv")
+
+# 2. Helper: compute SMD for terpene RCTs ---------------------------------
+compute_smd <- function(df) {
+  escalc(
+    measure = "SMD",
+    m1i = mean_terpene_post,
+    sd1i = sd_terpene_post,
+    n1i = n_terpene,
+    m2i = mean_control_post,
+    sd2i = sd_control_post,
+    n2i = n_control,
+    data = df,
+    vtype = "UB"
+  )
+}
+
+terpene_es <- compute_smd(terpene_rct)
+
+# 3. Random-effects meta-analysis for terpenes ----------------------------
+res_terpene_overall <- rma(yi, vi, data = terpene_es, method = "REML")
+print(res_terpene_overall)
+
+# Subgroup by compound_name (if enough trials per group)
+if ("compound_name" %in% colnames(terpene_es)) {
+  res_terpene_by_compound <- rma(
+    yi, vi,
+    mods = ~ factor(compound_name) - 1,
+    data = terpene_es,
+    method = "REML"
+  )
+  print(res_terpene_by_compound)
+}
+
+# 4. Forest and funnel plots ----------------------------------------------
+pdf("figures/forest_terpene_overall.pdf", width = 7, height = 7)
+forest(
+  res_terpene_overall,
+  slab = paste(terpene_rct$first_author, terpene_rct$year),
+  xlab = "Standardized Mean Difference (Hedges g)"
+)
+dev.off()
+
+pdf("figures/funnel_terpene_overall.pdf", width = 7, height = 7)
+funnel(res_terpene_overall, xlab = "Hedges g")
+dev.off()
+
+# 5. Example: de novo meta for another intervention -----------------------
+if (file.exists("data/extraction_stimulant_rcts.csv")) {
+  stim <- read_csv("data/extraction_stimulant_rcts.csv")
+  stim_es <- escalc(
+    measure = "SMD",
+    m1i = mean_treatment_post,
+    sd1i = sd_treatment_post,
+    n1i = n_treatment,
+    m2i = mean_control_post,
+    sd2i = sd_control_post,
+    n2i = n_control,
+    data = stim,
+    vtype = "UB"
+  )
+  res_stim <- rma(yi, vi, data = stim_es, method = "REML")
+  print(res_stim)
+
+  pdf("figures/forest_stimulants.pdf", width = 7, height = 7)
+  forest(
+    res_stim,
+    slab = paste(stim$first_author, stim$year),
+    xlab = "Standardized Mean Difference (Hedges g)"
+  )
+  dev.off()
+}</code></pre>
+      </section>
+
+      <section class="meta-methods__section">
+        <h2>Repository Skeleton</h2>
+        <pre><code class="language-markdown"># ADHD Umbrella Review & Terpene Meta-analysis
+
+## Contents
+1. Umbrella review of meta-analyses targeting ADHD attention/executive outcomes.
+2. De novo random-effects meta-analysis of terpene interventions.
+
+## Structure
+- data/
+  - extraction_meta_analyses.csv
+  - extraction_terpene_rcts.csv
+  - extraction_stimulant_rcts.csv (optional)
+  - amstar2_meta_analyses.csv
+  - rob2_terpene_rcts.csv
+- analysis/
+  - meta_analysis.R
+- figures/
+  - forest_*.pdf, funnel_*.pdf
+
+## Workflow
+1. Execute searches, export to reference manager, deduplicate.
+2. Dual screen titles/abstracts, then full texts in Rayyan/Covidence.
+3. Populate extraction CSVs + QA sheets (two reviewers).
+4. Run analysis/meta_analysis.R to compute pooled effects and plots.
+5. Interpret findings, update Terpedia, prepare manuscript + OSF/GitHub release.
+
+## Requirements
+- R (4.x)
+- Packages: metafor, dplyr, readr</code></pre>
+      </section>
+

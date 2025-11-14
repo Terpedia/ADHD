@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Study Methods · ADHD Terpene Focus Protocol</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Economica:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/computer-modern@0.1.2/index.min.css" />
+  </head>
+  <body>
+    <main class="meta-methods">
+      <header class="meta-methods__header">
+        <h1>Study Methods · Terpedia ADHD Terpene Focus</h1>
+        <p>
+          This methodology defines how Terpedia and human reviewers will design, validate, and document the
+          terpene-focused ADHD study. It aligns tightly with the metastudy, shares data infrastructure, and
+          produces outputs ready for manuscript drafting, regulatory review, and product formulation.
+        </p>
+      </header>
+
+      <section class="meta-methods__section">
+        <h2>Study Objective</h2>
+        <ul>
+          <li>Primary question: Do terpene-based interventions improve attention and executive function in ADHD populations?</li>
+          <li>Secondary focus: Which terpene classes (limonene, pinene, linalool, β-caryophyllene) show the greatest signal across delivery formats?</li>
+          <li>Operational goal: Produce a publishable protocol alongside a product-readiness blueprint for Focus on Focus™.</li>
+        </ul>
+      </section>
+
+      <section class="meta-methods__section">
+        <h2>Workflow Overview</h2>
+        <p>
+          The targeted-study workflow mirrors the metastudy pipeline while narrowing inclusion criteria and
+          highlighting formulation-readiness checkpoints.
+        </p>
+        <div class="meta-methods__graph mermaid">
+flowchart TD
+
+    subgraph P0[Program Governance]
+      G1[protocol workspace\nstudy-methods.html]
+      G2[LLM prompts\nADHD_Terpenes.md]
+      G3[PROSPERO linkage\ncrd.york.ac.uk/prospero]
+    G1 --> G2
+      G1 --> G3
+  end
+
+  subgraph P1[Search & Landscape]
+    S1[AI assistant drafts\ndatabase strings]
+    S2[Execute searches in\nPubMed, Embase, PsycINFO,\nWeb of Science, Cochrane]
+    S3[Manual additions from\nClinicalTrials.gov\nand trial registries]
+    S1 --> S2
+    S2 --> S3
+  end
+
+  subgraph P2[Screen & Select]
+    R1[Rayyan / Covidence\n(title + abstract)]
+    R2[Full-text review\n(dual human)]
+    R3[Document PRISMA counts]
+    S3 --> R1 --> R2 --> R3
+  end
+
+  subgraph P3[Extract & Synthesize]
+    E1[Targeted extraction sheet\n/data/extraction_terpene_rcts.csv]
+    E2[Quality appraisal\nRoB 2 + CONSORT]
+    E3[LLM-assisted prompt fill\nfocus briefing blocks]
+    R2 --> E1
+    E1 --> E2
+    E1 --> E3
+  end
+
+  subgraph P4[Model & Interpret]
+    M1[R scripts\n(meta_analysis.R\n+ targeted functions)]
+    M2[Effect estimation\nHedges g + CIs + meta-regressions]
+    M3[Product blueprint inputs\npharmacokinetics, dosing bands]
+    E2 --> M1 --> M2 --> M3
+  end
+
+  subgraph P5[Report & Deliver]
+    D1[Study narrative\nTeredpia knowledge base]
+    D2[Manuscript package\nsubmission-ready]
+    D3[Product dossier\nFocus on Focus updates]
+    M2 --> D1
+    M2 --> D2
+    M3 --> D3
+  end
+</div>
+      </section>
+
+      <section class="meta-methods__section">
+        <h2>Data Sources &amp; Tools</h2>
+        <ul>
+          <li>Biomedical databases: <a href="https://pubmed.ncbi.nlm.nih.gov/" target="_blank" rel="noreferrer">PubMed</a>, <a href="https://www.embase.com/" target="_blank" rel="noreferrer">Embase</a>, <a href="https://www.apa.org/pubs/databases/psycinfo" target="_blank" rel="noreferrer">PsycINFO</a>, <a href="https://www.webofscience.com/" target="_blank" rel="noreferrer">Web of Science</a>, <a href="https://www.cochranelibrary.com/" target="_blank" rel="noreferrer">Cochrane Library</a>.</li>
+          <li>Trial registries: <a href="https://clinicaltrials.gov/" target="_blank" rel="noreferrer">ClinicalTrials.gov</a>, <a href="https://www.isrctn.com/" target="_blank" rel="noreferrer">ISRCTN</a>.</li>
+          <li>Screening platforms: <a href="https://rayyan.ai/" target="_blank" rel="noreferrer">Rayyan</a>, <a href="https://www.covidence.org/" target="_blank" rel="noreferrer">Covidence</a>.</li>
+          <li>Reference management: <a href="https://www.zotero.org/" target="_blank" rel="noreferrer">Zotero</a>, <a href="https://www.endnote.com/" target="_blank" rel="noreferrer">EndNote</a>.</li>
+          <li>Quality instruments: <a href="https://www.bmj.com/content/358/bmj.j4008" target="_blank" rel="noreferrer">AMSTAR 2</a>, <a href="https://www.riskofbias.info/welcome/rob-2-0-tool" target="_blank" rel="noreferrer">Cochrane RoB 2</a>, <a href="https://www.equator-network.org/reporting-guidelines/consort/" target="_blank" rel="noreferrer">CONSORT</a>.</li>
+          <li>Statistical environment: <a href="https://cran.r-project.org/" target="_blank" rel="noreferrer">R 4.x</a> with <a href="https://cran.r-project.org/package=metafor" target="_blank" rel="noreferrer">metafor</a>, <a href="https://cran.r-project.org/package=dplyr" target="_blank" rel="noreferrer">dplyr</a>, <a href="https://cran.r-project.org/package=readr" target="_blank" rel="noreferrer">readr</a>.</li>
+        </ul>
+      </section>
+
+      <section class="meta-methods__section">
+        <h2>Eligibility Framework</h2>
+        <div class="meta-methods__grid">
+          <article class="meta-methods__card">
+            <h3>Population</h3>
+            <ul>
+              <li>Children, adolescents, or adults diagnosed with ADHD using <a href="https://www.psychiatry.org/psychiatrists/practice/dsm" target="_blank" rel="noreferrer">DSM</a> or <a href="https://icd.who.int/" target="_blank" rel="noreferrer">ICD</a> criteria.</li>
+              <li>Subgroup data extracted when stratified by age or comorbidity clusters.</li>
+            </ul>
+          </article>
+          <article class="meta-methods__card">
+            <h3>Intervention</h3>
+            <ul>
+              <li>Single-terpene or terpene-dominant formulations (limonene, α-pinene, β-pinene, linalool, β-caryophyllene).</li>
+              <li>Delivery: inhaled aromatherapy, oral capsules, tinctures, or transdermal programs.</li>
+            </ul>
+          </article>
+          <article class="meta-methods__card">
+            <h3>Comparators</h3>
+            <ul>
+              <li>Placebo, standard of care stimulant/non-stimulant therapy, behavioral therapy, or waitlist controls.</li>
+              <li>Active comparators accepted with documented effect direction.</li>
+            </ul>
+          </article>
+          <article class="meta-methods__card">
+            <h3>Outcomes</h3>
+            <ul>
+              <li>Primary: objective attention/executive performance (CPT/TOVA, Go/No-Go, Stroop, N-back, working memory).</li>
+              <li>Secondary: validated rating scales, biomarkers of focus, adverse event profiles.</li>
+            </ul>
+          </article>
+          <article class="meta-methods__card">
+            <h3>Study Design</h3>
+            <ul>
+              <li>Randomized controlled trials or quasi-randomized interventions with explicit terpene dosing.</li>
+              <li>Minimum intervention duration: 1 week. Follow-up extractions when ≥4 weeks available.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="meta-methods__section">
+        <h2>Extraction &amp; Data Management</h2>
+        <p>
+          Extraction happens in <code>data/extraction_terpene_rcts.csv</code>. AI proposes column schemas, humans validate,
+          and changes are version-controlled.
+        </p>
+        <article class="meta-methods__card">
+          <h3>Core fields</h3>
+          <pre><code>trial_id,first_author,year,journal,country,age_group,diagnostic_criteria,
+n_terpene,n_control,compound_name,compound_ratio,delivery_route,
+dose_mg_per_day,treatment_duration_weeks,control_type,cointerventions,
+primary_outcome,primary_outcome_type,mean_terpene_post,sd_terpene_post,
+mean_control_post,sd_control_post,mean_terpene_pre,sd_terpene_pre,
+mean_control_pre,sd_control_pre,followup_timepoint_weeks,
+mean_terpene_followup,sd_terpene_followup,mean_control_followup,
+sd_control_followup,adverse_events_reported,rob2_randomization,
+rob2_deviations,rob2_missing,rob2_measurement,rob2_reporting,
+rob2_overall,notes</code></pre>
+        </article>
+        <article class="meta-methods__card">
+          <h3>Quality review</h3>
+          <ul>
+            <li>Risk of bias: <a href="https://www.riskofbias.info/welcome/rob-2-0-tool" target="_blank" rel="noreferrer">RoB 2</a> recorded per domain with consensus adjudication.</li>
+            <li>Reporting quality: <a href="https://www.equator-network.org/reporting-guidelines/consort/" target="_blank" rel="noreferrer">CONSORT</a> checklist captured for narrative commentary.</li>
+            <li>Adverse events normalized to MedDRA preferred terms when provided.</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="meta-methods__section">
+        <h2>Analysis Plan</h2>
+        <ul>
+          <li>Effect size computation: standardized mean difference (Hedges g) using <a href="https://cran.r-project.org/package=metafor" target="_blank" rel="noreferrer">metafor</a>.</li>
+          <li>Primary model: random-effects (REML) with prediction intervals and heterogeneity (I², τ²).</li>
+          <li>Meta-regressions: compound class, delivery route, treatment duration, age group.</li>
+          <li>Subgroup sensitivity: remove high-risk-of-bias trials; isolate inhaled vs oral routes.</li>
+          <li>Publication bias: funnel plot inspection, Egger regression when ≥10 trials.</li>
+          <li>Supplementary outputs: dose-normalized forest plots, safety event tables, formulation readiness scores.</li>
+        </ul>
+      </section>
+
+      <section class="meta-methods__section">
+        <h2>LLM Prompt Integration</h2>
+        <p>
+          Prompt scaffolds live in <code>ADHD_Terpenes.md</code>. Terpedia uses structured prompts for:
+        </p>
+        <ul>
+          <li>Study synopsis (clinical framing, instrumentation, decision gates).</li>
+          <li>Operational plan (screening, randomization, dosing, monitoring).</li>
+          <li>Risk mitigation checklist (safety labs, adverse event tracking, withdrawal criteria).</li>
+          <li>Product translation memo linking trial design to Focus on Focus™ formulation refinements.</li>
+        </ul>
+      </section>
+
+      <section class="meta-methods__section">
+        <h2>Deliverables</h2>
+        <div class="meta-methods__grid">
+          <article class="meta-methods__card">
+            <h3>Scientific outputs</h3>
+            <ul>
+              <li>Study protocol manuscript (target: Translational Psychiatry tier journals).</li>
+              <li>Analysis scripts and data dictionary published to GitHub/OSF.</li>
+              <li>Reproducibility appendix with RoB 2 decisions and audit trail.</li>
+            </ul>
+          </article>
+          <article class="meta-methods__card">
+            <h3>Product/clinical outputs</h3>
+            <ul>
+              <li>Formulation brief with dose bands, delivery considerations, stability notes.</li>
+              <li>Clinician quick-start summarizing intervention flow and monitoring.</li>
+              <li>Partner deck linking evidence pipeline to Focus on Focus™ commercialization roadmap.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="meta-methods__section">
+        <h2>Next Steps</h2>
+        <ul>
+          <li>Finalize search syntax and upload to Rayyan with dual reviewer assignments.</li>
+          <li>Populate extraction template with at least three pilot trials to validate schema.</li>
+          <li>Implement meta-regression helpers in <code>analysis/meta_analysis.R</code> for terpene subgroup analysis.</li>
+          <li>Draft statistical analysis plan (SAP) referencing <a href="https://cran.r-project.org/package=metafor" target="_blank" rel="noreferrer">metafor</a> models and DSM outcome measures.</li>
+          <li>Coordinate with product team to align dosing hypotheses with current Focus on Focus™ roadmap.</li>
+        </ul>
+      </section>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+      mermaid.initialize({ startOnLoad: true, theme: "dark" });
+    </script>
+  </body>
+</html>
