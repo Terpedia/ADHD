@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Focus on Focus Product Blueprint</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Economica:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/computer-modern@0.1.2/index.min.css" />
+  </head>
+  <body>
+    <main class="product-page">
+      <header class="product-page__header">
+        <h1>Focus on Focus™ Product Program</h1>
+        <p>
+          A Terpedia-designed formulation blueprint derived from the ADHD evidence metastudy and the terpene
+          targeted study. The product experience aligns clinical insights with manufacturability and compliance.
+        </p>
+      </header>
+
+      <section class="product-page__section">
+        <h2>Research-Derived Formulation</h2>
+        <ul>
+          <li>Core terpenes: linalool, alpha-pinene, beta-caryophyllene, limonene.</li>
+          <li>Delivery vectors: micro-encapsulated tincture and controlled-release capsule.</li>
+          <li>Dosage rationale: anchored to effect sizes and biomarker correlations outlined in <a href="./ADHD.md">ADHD.md</a>.</li>
+        </ul>
+      </section>
+
+      <section class="product-page__section">
+        <h2>Clinical and Regulatory Dossier</h2>
+        <ul>
+          <li>Study protocols tie into <a href="./ADHD_Terpenes.md">ADHD_Terpenes.md</a> with instrumentation, endpoints, and decision gates.</li>
+          <li>Quality and safety requirements: cGMP sourcing, stability data, adverse-event monitoring.</li>
+          <li>Prospective publication venues for product outcomes: Journal of Integrative Medicine, Frontiers in Behavioral Neuroscience.</li>
+        </ul>
+      </section>
+
+      <section class="product-page__section product-page__cta">
+        <div class="product-page__cta-copy">
+          <h2>Preorder & Partner</h2>
+          <p>
+            We are preparing limited pilot batches in partnership with formulation labs. Register interest to
+            participate in the first production run or to integrate the protocol into clinical practice.
+          </p>
+        </div>
+        <form class="product-page__form" action="https://formspree.io/f/mqazgqer" method="POST">
+          <label>
+            Email
+            <input type="email" name="email" placeholder="you@example.com" required />
+          </label>
+          <label>
+            Organization
+            <input type="text" name="organization" placeholder="Clinic, Lab, or Company" />
+          </label>
+          <label>
+            Message
+            <textarea name="message" rows="4" placeholder="Tell us how you plan to use Focus on Focus™"></textarea>
+          </label>
+          <button type="submit">Reserve &amp; Request Updates</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

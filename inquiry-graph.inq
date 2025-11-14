@@ -1,0 +1,98 @@
+flowchart TD
+
+%% === QUESTIONS LANE ===
+  subgraph QLane[Question Lane]
+    q_seed["Q Seed:<br/>Can terpenes help with ADHD focus?"]
+    q_focus["Q Focus Terpenes:<br/>Which terpenes are linked to focus?"]
+    q_attention["Q Attention Circuits:<br/>How do terpenes affect attention circuits?"]
+    q_delivery["Q Delivery Methods:<br/>What delivery methods preserve activity?"]
+  q_briefing_prompt["Briefing Prompt:<br/>Produce a 230-word synopsis covering ADHD terpene support,<br/>mechanisms, candidate compounds, immediate actions, and a product recommendation."]
+    q_metastudy_prompt["Metastudy Prompt:<br/>Compose an 850-word metastudy with Executive Summary, Scope & Methods,<br/>Evidence Synthesis, Mechanistic Insights, Implementation Considerations, and Next Actions.<br/>Reference >=3 studies with effect sizes and note evidence gaps."]
+    q_targeted_prompt["Targeted Study Prompt:<br/>Draft a 600-word terpene x ADHD study plan covering Objective, Population & Arms,<br/>Outcomes, Operational Plan, Risk Mitigation, Decision Gates, instrumentation, and checkpoints."]
+end
+
+%% === ANSWERS LANE ===
+subgraph ALane[Answer Lane]
+  a_focus["Answer:<br/>Candidate focus terpenes (ocimene, pinene, limonene)."]
+  a_briefing["LLM Synopsis:<br/>230-word briefing on terpene support for ADHD focus."]
+  a_metastudy["Metastudy Abstract:<br/>Draft narrative with pooled effect sizes and interpretation."]
+  a_targeted["Targeted Study Abstract:<br/>12-week cohort design with biomarkers and evaluation plan."]
+end
+
+%% === ARTIFACT LANE ===
+subgraph ArtLane[Artifact Lane]
+  artifact_pubmed["Artifact:<br/>PubMed dataset export (42 peer-reviewed studies)."]
+  artifact_formulation["Artifact:<br/>Formulation stability data (vapor, tincture, encapsulation)."]
+  artifact_evidence["Evidence Panel:<br/>Highlighted papers with summaries."]
+  artifact_terms["Term Highlights:<br/>Top terminology across abstracts."]
+  artifact_claims["Claim Highlights:<br/>Statements flagged from literature."]
+  artifact_abstracts["Abstract Explorer:<br/>Tabbed deep dives per paper."]
+  artifact_metastudy_markdown["Metastudy Markdown Export:<br/>Full metastudy narrative."]
+  artifact_metastudy_card["Metastudy Artifact Card:<br/>Opens ADHD.md for review."]
+  artifact_targeted_markdown["Targeted Study Markdown Export:<br/>Operational plan text."]
+  artifact_targeted_card["Targeted Study Artifact Card:<br/>Opens ADHD_Terpenes.md."]
+  artifact_product["Product Blueprint:<br/>Focus on Focus™ preorder brief (product.html)."]
+end
+
+%% === GOALS ===
+subgraph Goals
+  goal_meta["Goal:<br/>ADHD-Terpene Meta-Study"]
+  goal_adjunct["Goal:<br/>Adjunct Clinical Study Design"]
+  goal_product["Goal:<br/>Product Specification"]
+end
+
+%% === EDGES ===
+q_seed -->|subquestion| q_focus
+q_seed -->|subquestion| q_attention
+q_seed -->|subquestion| q_delivery
+
+q_focus -->|answers| a_focus
+a_focus -->|artifact evidence| artifact_pubmed
+artifact_pubmed -->|dependency| goal_meta
+
+q_delivery -->|produces| artifact_formulation
+artifact_formulation -->|dependency| goal_product
+
+q_briefing_prompt -->|invokes| a_briefing
+a_briefing -->|guides| artifact_evidence
+a_briefing --> artifact_terms
+a_briefing --> artifact_claims
+a_focus -->|feeds| artifact_evidence
+
+artifact_evidence --> artifact_abstracts
+artifact_terms --> artifact_abstracts
+artifact_claims --> artifact_abstracts
+
+artifact_abstracts --> q_metastudy_prompt
+q_metastudy_prompt --> a_metastudy
+a_metastudy --> artifact_metastudy_markdown
+  artifact_metastudy_markdown --> artifact_metastudy_card
+  artifact_metastudy_card --> q_targeted_prompt
+
+  q_targeted_prompt --> a_targeted
+  a_targeted --> artifact_targeted_markdown
+  artifact_targeted_markdown --> artifact_targeted_card
+  artifact_targeted_card --> goal_product
+  artifact_targeted_card --> artifact_product
+  artifact_product --> goal_product
+
+goal_meta -->|depends on| q_attention
+goal_meta -->|depends on| a_focus
+goal_meta -->|depends on| artifact_pubmed
+
+goal_adjunct -->|depends on| q_seed
+goal_adjunct -->|depends on| q_attention
+
+goal_product -->|depends on| q_delivery
+goal_product -->|depends on| artifact_formulation
+
+%% === STYLE DEFINITIONS ===
+classDef question fill=#0ea5e9,color=#0b1120,stroke=#0369a1,stroke-width:2px;
+classDef answer fill=#22d3ee,color=#082f49,stroke=#0e7490,stroke-width:2px;
+classDef artifact fill=#f8fafc,color=#0f172a,stroke=#94a3b8,stroke-width:1.5px;
+classDef goal fill=#fde68a,color=#78350f,stroke=#f59e0b,stroke-width:2px;
+
+class q_seed,q_focus,q_attention,q_delivery,q_briefing_prompt,q_metastudy_prompt,q_targeted_prompt question;
+class a_focus,a_briefing,a_metastudy,a_targeted answer;
+class artifact_pubmed,artifact_formulation,artifact_evidence,artifact_terms,artifact_claims,artifact_abstracts,artifact_metastudy_markdown,artifact_metastudy_card,artifact_targeted_markdown,artifact_targeted_card artifact;
+class goal_meta,goal_adjunct,goal_product goal;

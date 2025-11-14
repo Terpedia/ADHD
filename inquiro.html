@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terpedia ADHD Inquiry Workspace</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Economica:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/computer-modern@0.1.2/index.min.css" />
+  </head>
+  <body data-commit-label="" data-commit-branch="main">
+    <div class="build-badge" role="status" aria-live="polite">
+      <span class="build-badge__commit" data-role="commit-label">Syncing commit…</span>
+      <span class="build-badge__separator">•</span>
+      <span class="build-badge__time" data-role="timestamp">--:--</span>
+    </div>
+    <a
+      class="colab-badge"
+      href="https://colab.research.google.com/github/dcmcshan/ADHD/blob/main/ADHD.ipynb"
+      target="_blank"
+      rel="noopener"
+      aria-label="Open ADHD notebook in Google Colab"
+    >
+      <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab badge" />
+    </a>
+    <main class="workspace workspace--lanes" id="workspace">
+      <header class="workspace__header">
+        <div class="workspace__heading">
+          <p class="workspace__eyebrow">Terpedia Inquiry Graph</p>
+          <h1 class="workspace__title">Focus On Focus</h1>
+        </div>
+        <div class="workspace__actions">
+          <button id="new-flow-button" class="workspace__action" type="button">
+            + Add Inquiry Lane
+          </button>
+        </div>
+      </header>
+
+      <section class="workspace__board" aria-label="Inquiry workflow lanes">
+        <div id="canvas" class="canvas" role="region" aria-label="Three-lane inquiry workspace">
+          <div class="canvas__lanes" aria-hidden="true">
+            <div class="canvas__lane">
+              <span class="canvas__lane-label">Questions</span>
+            </div>
+            <div class="canvas__lane">
+              <span class="canvas__lane-label">Answers</span>
+            </div>
+            <div class="canvas__lane">
+              <span class="canvas__lane-label">Artifacts</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/2.15.6/js/jsplumb.min.js"></script>
+    <script type="module" src="scripts/main.js"></script>
+  </body>
+</html>

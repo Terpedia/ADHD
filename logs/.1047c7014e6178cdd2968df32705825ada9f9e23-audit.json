@@ -9,6 +9,16 @@
             "date": 1762545304827,
             "name": "/Users/danielmcshan/GitHub/ADHD/logs/mcp-puppeteer-2025-11-07.log",
             "hash": "748b72d8adf8f48217ab0311f09a697673d5c1ec93c75d35c7812451b78f8e1e"
+        },
+        {
+            "date": 1762838124155,
+            "name": "/Users/danielmcshan/GitHub/ADHD/logs/mcp-puppeteer-2025-11-10.log",
+            "hash": "237cf2894256e37d361277c438239d63ce9d4310feb2bb91d5ea497e83fbbf99"
+        },
+        {
+            "date": 1763079200877,
+            "name": "/Users/danielmcshan/GitHub/ADHD/logs/mcp-puppeteer-2025-11-13.log",
+            "hash": "88209d6a5b75d8ac1409ac61340da41fd0faf765137f8f82de8a67a0ad19f061"
         }
     ],
     "hashType": "sha256"

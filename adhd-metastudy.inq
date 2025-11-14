@@ -1,0 +1,94 @@
+flowchart TD
+
+%% === TOP: GOALS ===
+G1[[Global ADHD Metastudy]]
+G2[[Incremental / Re-runnable Pipeline]]
+
+G1 --> Q1
+G2 --> Q1
+
+%% === QUESTIONS / STAGES ===
+
+subgraph S0[0. Define Question Space]
+Q1[Q1: Define ADHD question registry<br/>(treatment, assessment, neurobiology, risk, lifespan)]
+end
+
+subgraph S1[1. Ingest & Screen]
+Q2[Q2: Screen corpus for ADHD + analyzable studies]
+end
+
+subgraph S2[2. Structured Extraction]
+Q3[Q3: Extract study, population, intervention, outcomes]
+end
+
+subgraph S3[3. Normalize]
+Q4[Q4: Normalize instruments, dx labels, timepoints, groups]
+end
+
+subgraph S4[4. Effect Size Layer]
+Q5[Q5: Compute effect sizes + variances + analysis_key]
+end
+
+subgraph S5[5. Meta-Analysis]
+Q6[Q6: Run random-effects meta per analysis_key]
+end
+
+subgraph S6[6. Heterogeneity, Moderators, Bias]
+Q7[Q7: Meta-regressions / subgroups]
+Q8[Q8: Publication & reporting bias checks]
+end
+
+subgraph S7[7. Reporting & Graph]
+Q9[Q9: PRISMA + evidence summaries + inquiry graph]
+end
+
+%% === DATA / ARTIFACTS ===
+
+A_qreg[(question_registry)]
+A_screen[(screened_studies.csv)]
+A_extract[(extracted_outcomes.csv)]
+A_norm[(normalized_outcomes.csv)]
+A_eff[(effects_table.csv)]
+A_meta[(meta_results.csv)]
+A_mod[(moderator_results.csv)]
+A_bias[(bias_assessment.csv)]
+A_graph[(inquiry_graph.json)]
+
+%% === FLOWS ===
+
+Q1 --> A_qreg
+A_qreg --> Q2
+
+Q2 --> A_screen
+A_screen --> Q3
+
+Q3 --> A_extract
+A_extract --> Q4
+
+Q4 --> A_norm
+A_norm --> Q5
+
+Q5 --> A_eff
+A_eff --> Q6
+
+Q6 --> A_meta
+A_meta --> Q7
+A_eff --> Q7
+
+Q7 --> A_mod
+Q8 --> A_bias
+A_meta --> Q8
+
+A_meta --> Q9
+A_mod --> Q9
+A_bias --> Q9
+Q9 --> A_graph
+
+%% === STYLE (optional) ===
+classDef goal fill=#fdd,fcolor=#000,stroke=#900,stroke-width=1.5px;
+classDef qnode fill=#eef,stroke=#336,stroke-width=1px;
+classDef art fill=#fff,stroke=#999,stroke-dasharray: 3 3;
+
+class G1,G2 goal;
+class Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8,Q9 qnode;
+class A_qreg,A_screen,A_extract,A_norm,A_eff,A_meta,A_mod,A_bias,A_graph art;

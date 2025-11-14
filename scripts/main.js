@@ -1,5 +1,5 @@
 const DEFAULT_METASTUDY = {
-  question: "Generate a metastudy about ADHD backed by our current evidence graph.",
+  question: "Outline the latest ADHD terpene metastudy in 3-4 paragraphs.",
   abstract:
     "Objective: Aggregate cross-modal ADHD interventions to surface consistent response patterns. Methods: Synthesised 42 peer-reviewed trials spanning CBT, pharmacological, and integrative modalities, normalising outcomes to executive-function endpoints. Findings: Sustained attention improved in 71% of interventions with a pooled Hedges g of 0.42; working-memory gains tracked alongside dopaminergic modulation. Interpretation: The evidence backbone substantiates continued combination strategies blending neuromodulation, behavioural scaffolding, and terpene adjuncts.",
   markdown: [
@@ -25,13 +25,13 @@ const DEFAULT_METASTUDY = {
     "**Pull-through:** Extracted effect sizes for sustained attention, working memory, and executive control.",
     "**Usage:** Anchors Terpedia’s evidence grading rubric for ADHD-focused product concepts.",
   ].join("\n"),
-  link: "https://terpedia.com/research/adhd-focus-metastudy",
-  cta: "Open ADHD Metastudy",
+  link: "./ADHD.md",
+  cta: "Open ADHD.md",
   type: "markdown",
 };
 
 const DEFAULT_TERP_STUDY = {
-  question: "Write a targeted study on terpenes and ADHD suited for rapid product iteration.",
+  question: "Draft a concise terpene x ADHD study brief.",
   abstract:
     "Objective: Design a targeted validation study quantifying terpene contributions to ADHD symptom improvement. Methods: Prospective 12-week cohort randomised to terpene-rich formulation vs. standard behavioural therapy; endpoints include n-back accuracy, EEG beta synchrony, and clinician-rated focus inventories. Findings: Expected medium effect on sustained attention (d≈0.38) with correlated noradrenergic biomarkers. Interpretation: Study de-risks terpene integration and establishes readiness checkpoints for formulation scale-up.",
   markdown: [
@@ -58,15 +58,87 @@ const DEFAULT_TERP_STUDY = {
     "**Highlights:** Correlated linalool/pinene ratios with n-back performance and EEG biomarkers.",
     "**Next:** Supplies formulation SOPs and regulatory notes for rapid product iteration.",
   ].join("\n"),
-  link: "https://terpedia.com/research/terpenes-adhd-focus-trial",
-  cta: "View Terpene Study Dossier",
+    link: "./ADHD_Terpenes.md",
+    cta: "Open ADHD_Terpenes.md",
+  type: "markdown",
+};
+
+const ADHD_ATTENTION_CHAIN = {
+  question: "What does the 2015-2025 ADHD metasurvey reveal about attentional deficits?",
+  answer: {
+    title: "Metasurvey Highlights",
+    abstract: [
+      "### Attentional Findings 2015-2025",
+      "- Reaction time variability is the most reproducible behavioral differentiator.",
+      "- Default-mode interference and frontoparietal hypoactivation explain lapses in focus.",
+      "- Multi-pathway models integrate arousal, executive control, and motivational drivers.",
+    ].join("\n"),
+  },
+  artifact: {
+    title: "Metasurvey • ADHD Attention 2015-2025",
+    copy: [
+      "**Artifact:** Comprehensive metasurvey captured in `ADHD.md`.",
+      "",
+      "- Synthesizes behavioral, neurobiological, theoretical, and methodological strands.",
+      "- Logs gaps on heterogeneity, diagnostics, and intervention durability.",
+      "- Includes a study index covering 2015-2025 peer-reviewed literature.",
+      "",
+      "[Open the ADHD metasurvey](./ADHD.md)",
+    ].join("\n"),
+    link: "./ADHD.md",
+    cta: "Open ADHD Metasurvey",
+    type: "markdown",
+  },
+};
+
+const ADHD_TERPENE_CHAIN = {
+  question: "Which natural terpenes show ADHD-relevant effects on focus and regulation?",
+  answer: {
+    title: "Terpene Evidence Highlights",
+    abstract: [
+      "### Natural Terpenes for ADHD Focus",
+      "- Alpha-pinene and 1,8-cineole support sustained attention via cholinergic pathways.",
+      "- D-limonene, vetiver, and menthol modulate alertness markers without stimulant load.",
+      "- Beta-caryophyllene and linalool mitigate stress and sleep barriers to focus.",
+    ].join("\n"),
+  },
+  artifact: {
+    title: "Natural Terpenes • Focus & ADHD",
+    copy: [
+      "**Artifact:** `ADHD_Terpenes.md` catalogs peer-reviewed terpene evidence for ADHD.",
+      "",
+      "- Profiles eight highlighted terpenes with sources, mechanisms, and study signals.",
+      "- Flags research gaps and future trial priorities.",
+      "- Useful for formulation design, RAG ingestion, and adjunct strategy planning.",
+      "",
+      "[Open the terpene briefing](./ADHD_Terpenes.md)",
+    ].join("\n"),
+    link: "./ADHD_Terpenes.md",
+    cta: "Open Terpene Briefing",
+    type: "markdown",
+  },
+};
+
+const PRODUCT_BLUEPRINT_ARTIFACT = {
+  title: "Focus on Focus™ Product Blueprint",
+  copy: [
+    "**Artifact:** `product.html` previews the Terpedia-designed product experience.",
+    "",
+    "- Summarizes formulation choices informed by the ADHD metastudy and terpene trial.",
+    "- Documents regulatory checkpoints, quality controls, and go-to-market cadence.",
+    "- Provides a preorder interest form for clinical and consumer partners.",
+    "",
+    "[View the product blueprint](./product.html)",
+  ].join("\n"),
+  link: "./product.html",
+  cta: "Open Product Blueprint",
   type: "markdown",
 };
 const canvas = document.getElementById("canvas");
 const newFlowButton = document.getElementById("new-flow-button");
 const badge = document.querySelector(".build-badge");
 
-const GRAPH_DEFINITION_URL = "./inquiry-graph.json";
+const GRAPH_DEFINITION_URL = "inquiry-graph.inq";
 
 const cloneDeep = (value) => JSON.parse(JSON.stringify(value));
 
@@ -109,11 +181,163 @@ const DEFAULT_PAPERS = [
   },
 ];
 
+let defaultBriefingPrompt = "Summarize the current inquiry focus in 2-3 concise paragraphs.";
+
 const flows = [];
 let jsPlumbInstance = null;
 let graphDefinition = null;
 let activeFlowId = null;
 const flowConnections = new Map();
+const nodeCollapseState = new Map();
+const observedLayoutElements = new WeakSet();
+let layoutResizeObserver = null;
+
+const loadGraphDefinition = async () => {
+  if (typeof fetch !== "function") {
+    console.warn("fetch is not available in this environment; skipping inquiry graph load.");
+    return null;
+  }
+
+  if (typeof window !== "undefined" && window.location && window.location.protocol === "file:") {
+    console.warn("Skipping graph load while running from file:// URI.");
+    return null;
+  }
+
+  try {
+    const response = await fetch(GRAPH_DEFINITION_URL, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+    graphDefinition = (await response.text()).trim();
+    if (typeof window !== "undefined") {
+      window.INQUIRY_GRAPH_DEFINITION = graphDefinition;
+    }
+    return graphDefinition;
+  } catch (error) {
+    console.warn("Failed to load inquiry graph definition:", error);
+    graphDefinition = null;
+    if (typeof window !== "undefined" && "INQUIRY_GRAPH_DEFINITION" in window) {
+      delete window.INQUIRY_GRAPH_DEFINITION;
+    }
+    return null;
+  }
+};
+
+const decodeHtmlEntities = (value) => {
+  if (!value || typeof value !== "string") return value;
+  const ENTITY_MAP = {
+    "&amp;": "&",
+    "&lt;": "<",
+    "&gt;": ">",
+    "&quot;": '"',
+    "&#39;": "'",
+    "&#96;": "`",
+  };
+  return value.replace(/&(amp|lt|gt|quot|#39|#96);/g, (match) => ENTITY_MAP[match] ?? match);
+};
+
+const htmlToPlainText = (value) => {
+  if (!value) return "";
+  return decodeHtmlEntities(value.replace(/<br\s*\/?>/gi, "\n")).replace(/<\/?[^>]+>/g, "");
+};
+
+const parseInquiryGraphDefinition = (definition) => {
+  if (!definition) return { nodes: new Map() };
+  const lines = definition.split(/\r?\n/);
+  const nodes = new Map();
+  let currentLane = null;
+  lines.forEach((rawLine) => {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("%%")) return;
+    if (line.startsWith("subgraph")) {
+      const labelMatch = line.match(/subgraph\s+\w+\[(.+?)\]/i);
+      if (labelMatch) {
+        const label = labelMatch[1].toLowerCase();
+        if (label.includes("question lane")) currentLane = "questions";
+        else if (label.includes("answer lane")) currentLane = "answers";
+        else if (label.includes("artifact lane")) currentLane = "artifacts";
+        else if (label.includes("goal")) currentLane = "goals";
+        else currentLane = null;
+      }
+      return;
+    }
+    if (line === "end") {
+      currentLane = null;
+      return;
+    }
+    const nodeMatch = line.match(/^([A-Za-z0-9_]+)\s*\["([\s\S]+?)"\]/);
+    if (nodeMatch) {
+      const [, id, text] = nodeMatch;
+      nodes.set(id, { id, raw: text, lane: currentLane });
+    }
+  });
+  return { nodes };
+};
+
+const toLines = (value) =>
+  htmlToPlainText(value)
+    .split("\n")
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+
+const extractPromptText = (value) => {
+  const lines = toLines(value);
+  if (lines.length && /prompt/i.test(lines[0])) {
+    lines.shift();
+  }
+  return lines.join("\n");
+};
+
+const extractQuestionText = (value) => {
+  const lines = toLines(value);
+  if (
+    lines.length &&
+    (/^q(\s|[·\.:])/i.test(lines[0]) || /question/i.test(lines[0]))
+  ) {
+    lines.shift();
+  }
+  return lines.join(" ").trim();
+};
+
+const applyGraphDefinition = (definition) => {
+  if (!definition) return;
+  const parsed = parseInquiryGraphDefinition(definition);
+  const nodes = parsed.nodes;
+  const getText = (id) => nodes.get(id)?.raw ?? null;
+
+  const seedQuestion = getText("q_seed");
+  if (seedQuestion) {
+    const normalized = extractQuestionText(seedQuestion);
+    if (normalized) {
+      INITIAL_FLOW.question = normalized;
+    }
+  }
+
+  const briefingPrompt = getText("q_briefing_prompt");
+  if (briefingPrompt) {
+    const normalized = extractPromptText(briefingPrompt);
+    if (normalized) {
+      defaultBriefingPrompt = normalized;
+      INITIAL_FLOW.briefingPrompt = normalized;
+    }
+  }
+
+  const metastudyPrompt = getText("q_metastudy_prompt");
+  if (metastudyPrompt) {
+    const normalized = extractPromptText(metastudyPrompt);
+    if (normalized) {
+      DEFAULT_METASTUDY.question = normalized;
+    }
+  }
+
+  const studyPrompt = getText("q_targeted_prompt");
+  if (studyPrompt) {
+    const normalized = extractPromptText(studyPrompt);
+    if (normalized) {
+      DEFAULT_TERP_STUDY.question = normalized;
+    }
+  }
+};
 
 const updateFlowVisualState = (flowRecord, isActive) => {
   if (!flowRecord) return;
@@ -171,6 +395,13 @@ const NODE_LANES = {
   terpStudyAbstract: "answers",
   terpStudyMarkdown: "answers",
   terpStudy: "artifacts",
+  adhdSurveyQuestion: "questions",
+  adhdSurveyAnswer: "answers",
+  adhdSurveyArtifact: "artifacts",
+  terpBriefQuestion: "questions",
+  terpBriefAnswer: "answers",
+  terpBriefArtifact: "artifacts",
+  productArtifact: "artifacts",
 };
 const ROW_SEQUENCE = [
   ["question"],
@@ -188,6 +419,13 @@ const ROW_SEQUENCE = [
   ["terpStudyAbstract"],
   ["terpStudyMarkdown"],
   ["terpStudy"],
+  ["adhdSurveyQuestion"],
+  ["adhdSurveyAnswer"],
+  ["adhdSurveyArtifact"],
+  ["terpBriefQuestion"],
+  ["terpBriefAnswer"],
+  ["terpBriefArtifact"],
+  ["productArtifact"],
 ];
 const ROW_GAP = 140;
 const ROW_BASE_OFFSET = 140;
@@ -382,6 +620,49 @@ const scheduleLayout = () => {
   });
 };
 
+const ensureLayoutObserver = () => {
+  if (typeof ResizeObserver === "undefined") return null;
+  if (!layoutResizeObserver) {
+    layoutResizeObserver = new ResizeObserver(() => {
+      scheduleLayout();
+    });
+  }
+  return layoutResizeObserver;
+};
+
+const registerLayoutObservedElements = () => {
+  const observer = ensureLayoutObserver();
+  if (!observer || !canvas) return;
+  if (!observedLayoutElements.has(canvas)) {
+    observer.observe(canvas);
+    observedLayoutElements.add(canvas);
+  }
+  const lanes = canvas.querySelectorAll(".canvas__lane");
+  lanes.forEach((lane) => {
+    if (!observedLayoutElements.has(lane)) {
+      observer.observe(lane);
+      observedLayoutElements.add(lane);
+    }
+  });
+};
+
+const registerFontLayoutFallback = () => {
+  const fontSet = document.fonts;
+  if (!fontSet) return;
+  const handleFontsReady = () => {
+    scheduleLayout();
+  };
+  if (fontSet.status === "loaded") {
+    handleFontsReady();
+    return;
+  }
+  if (typeof fontSet.addEventListener === "function") {
+    fontSet.addEventListener("loadingdone", handleFontsReady, { once: true });
+  } else if (fontSet.ready && typeof fontSet.ready.then === "function") {
+    fontSet.ready.then(handleFontsReady).catch(() => {});
+  }
+};
+
 const layoutFlows = () => {
   if (!canvas) return;
   const instance = ensureJsPlumbInstance();
@@ -568,6 +849,20 @@ const buildPrompt = (question, persona = "research strategist") => {
     .join("\n");
 };
 
+const composeBriefingPrompt = (question, template) => {
+  const baseQuestion = (question ?? "").trim();
+  const templateBody = (template ?? "").trim();
+  if (!templateBody) {
+    return buildPrompt(baseQuestion);
+  }
+  const sections = [];
+  if (baseQuestion) {
+    sections.push(`Inquiry: ${baseQuestion}`);
+  }
+  sections.push(templateBody);
+  return sections.filter(Boolean).join("\n\n");
+};
+
 const buildLLMAnswer = (question, papers) => {
   const firstPaper = papers[0];
   const terpeneMention = firstPaper?.keyTerpene || "linalool";
@@ -665,6 +960,7 @@ const createNodeShell = ({ id, label, title, summary, x, y, lane }) => {
     summaryEl.hidden = !shouldCollapse;
     body.hidden = shouldCollapse;
     updateToggleVisual(!shouldCollapse);
+    nodeCollapseState.set(id, shouldCollapse);
     if (jsPlumbInstance) {
       jsPlumbInstance.revalidate(node);
     }
@@ -676,7 +972,8 @@ const createNodeShell = ({ id, label, title, summary, x, y, lane }) => {
   });
 
   applySummary(defaultSummary);
-  setCollapsed(true);
+  const persistedCollapsed = nodeCollapseState.has(id) ? nodeCollapseState.get(id) : true;
+  setCollapsed(persistedCollapsed);
 
   node.__setSummary = applySummary;
   node.__setCollapsed = setCollapsed;
@@ -692,6 +989,7 @@ const connectNodes = (fromId, toId, flowId) => {
   if (!instance) return;
   const sourceEl = document.getElementById(fromId);
   const targetEl = document.getElementById(toId);
+  if (!sourceEl || !targetEl) return;
   const sourceLane = sourceEl?.dataset?.lane || null;
   const targetLane = targetEl?.dataset?.lane || null;
   let anchors = ["Bottom", "Top"];
@@ -705,7 +1003,7 @@ const connectNodes = (fromId, toId, flowId) => {
     cssClass: "flow-connection",
   });
 
-  if (flowId) {
+  if (flowId && connection) {
     if (!flowConnections.has(flowId)) {
       flowConnections.set(flowId, []);
     }
@@ -777,9 +1075,11 @@ const buildStaticQuestionNode = ({ id, position, text }) => {
 };
 
 const buildPromptNode = ({ id, position, flow }) => {
-  const summaryText = flow.question
-    ? truncateText(`Briefing for “${flow.question}”`, 110)
-    : "System briefing template";
+  const summaryText = flow.briefingPrompt
+    ? truncateText(flow.briefingPrompt, 110)
+    : flow.question
+      ? truncateText(`Briefing for “${flow.question}”`, 110)
+      : "System briefing template";
   const { node, body, setSummary } = createNodeShell({
     id,
     label: "LLM Prompt",
@@ -794,7 +1094,7 @@ const buildPromptNode = ({ id, position, flow }) => {
 
   const pre = document.createElement("pre");
   pre.className = "node__prompt";
-  pre.textContent = buildPrompt(flow.question);
+  pre.textContent = composeBriefingPrompt(flow.question, flow.briefingPrompt);
   pre.dataset.role = "promptContent";
 
   body.append(pre);
@@ -1308,12 +1608,13 @@ const buildClaimsNode = ({ id, position, flow }) => {
  */
 const createInquiryFlow = (flow, index = flows.length) => {
   const flowId = uid("flow");
-  const yOffset = index * 920;
   const columnSpacing = 360;
   const columnLeftX = 48;
   const columnMiddleX = columnLeftX + columnSpacing;
   const columnRightX = columnMiddleX + columnSpacing;
   const verticalSpacing = 220;
+  const flowHeight = verticalSpacing * (ROW_SEQUENCE.length + 2);
+  const yOffset = index * flowHeight;
   const rowY = (row) => ROW_BASE_OFFSET + yOffset + verticalSpacing * row;
   const layout = {
     question: { x: columnLeftX, y: rowY(0) },
@@ -1331,6 +1632,13 @@ const createInquiryFlow = (flow, index = flows.length) => {
     terpStudyAbstract: { x: columnMiddleX, y: rowY(12) },
     terpStudyMarkdown: { x: columnMiddleX, y: rowY(13) },
     terpStudy: { x: columnRightX, y: rowY(14) },
+    adhdSurveyQuestion: { x: columnLeftX, y: rowY(15) },
+    adhdSurveyAnswer: { x: columnMiddleX, y: rowY(16) },
+    adhdSurveyArtifact: { x: columnRightX, y: rowY(17) },
+    terpBriefQuestion: { x: columnLeftX, y: rowY(18) },
+    terpBriefAnswer: { x: columnMiddleX, y: rowY(19) },
+    terpBriefArtifact: { x: columnRightX, y: rowY(20) },
+    productArtifact: { x: columnRightX, y: rowY(21) },
   };
 
   const flowRecord = { id: flowId, data: flow, nodes: {} };
@@ -1338,7 +1646,10 @@ const createInquiryFlow = (flow, index = flows.length) => {
   flowConnections.set(flowId, []);
 
   const instance = ensureJsPlumbInstance();
-    const buildFlow = () => {
+  if (!flow.briefingPrompt) {
+    flow.briefingPrompt = defaultBriefingPrompt;
+  }
+  const buildFlow = () => {
     const questionNode = buildQuestionNode({
       id: `${flowId}-question`,
       position: layout.question,
@@ -1398,28 +1709,89 @@ const createInquiryFlow = (flow, index = flows.length) => {
       artifact: flow.terpStudy || DEFAULT_TERP_STUDY,
     });
 
-    flowRecord.nodes = {
-      question: questionNode.id,
-      prompt: promptNode.id,
-      answer: answerNode.id,
-      evidence: evidenceNode.id,
-      terms: termsNode.id,
-      claims: claimsNode.id,
-      abstracts: abstractsNode.id,
-      metastudy: metastudyNode.id,
-      terpStudy: terpStudyNode.id,
-    };
+      const adhdSurveyConfig = flow.adhdSurveyChain || ADHD_ATTENTION_CHAIN;
+      const adhdSurveyQuestionNode = buildStaticQuestionNode({
+        id: `${flowId}-adhd-survey-question`,
+        position: layout.adhdSurveyQuestion,
+        text: adhdSurveyConfig.question,
+      });
 
-    connectNodes(questionNode.id, promptNode.id, flowId);
-    connectNodes(promptNode.id, answerNode.id, flowId);
-    connectNodes(answerNode.id, evidenceNode.id, flowId);
-    connectNodes(answerNode.id, termsNode.id, flowId);
-    connectNodes(answerNode.id, claimsNode.id, flowId);
-    connectNodes(evidenceNode.id, termsNode.id, flowId);
-    connectNodes(termsNode.id, claimsNode.id, flowId);
-    connectNodes(claimsNode.id, abstractsNode.id, flowId);
-    connectNodes(abstractsNode.id, metastudyNode.id, flowId);
-    connectNodes(metastudyNode.id, terpStudyNode.id, flowId);
+      const adhdSurveyAnswerNode = buildAbstractAnswerNode({
+        id: `${flowId}-adhd-survey-answer`,
+        position: layout.adhdSurveyAnswer,
+        title: adhdSurveyConfig.answer.title,
+        abstract: adhdSurveyConfig.answer.abstract,
+        label: "Synthesis",
+      });
+
+      const adhdSurveyArtifactNode = buildArtifactNode({
+        id: `${flowId}-adhd-survey-artifact`,
+        position: layout.adhdSurveyArtifact,
+        artifact: adhdSurveyConfig.artifact,
+      });
+
+      const terpBriefConfig = flow.terpeneChain || ADHD_TERPENE_CHAIN;
+      const terpBriefQuestionNode = buildStaticQuestionNode({
+        id: `${flowId}-terp-brief-question`,
+        position: layout.terpBriefQuestion,
+        text: terpBriefConfig.question,
+      });
+
+      const terpBriefAnswerNode = buildAbstractAnswerNode({
+        id: `${flowId}-terp-brief-answer`,
+        position: layout.terpBriefAnswer,
+        title: terpBriefConfig.answer.title,
+        abstract: terpBriefConfig.answer.abstract,
+        label: "Synthesis",
+      });
+
+      const terpBriefArtifactNode = buildArtifactNode({
+        id: `${flowId}-terp-brief-artifact`,
+        position: layout.terpBriefArtifact,
+        artifact: terpBriefConfig.artifact,
+      });
+
+      const productArtifactConfig = flow.productBlueprint || PRODUCT_BLUEPRINT_ARTIFACT;
+      const productArtifactNode = buildArtifactNode({
+        id: `${flowId}-product-artifact`,
+        position: layout.productArtifact,
+        artifact: productArtifactConfig,
+      });
+
+      flowRecord.nodes = {
+        question: questionNode.id,
+        prompt: promptNode.id,
+        answer: answerNode.id,
+        evidence: evidenceNode.id,
+        terms: termsNode.id,
+        claims: claimsNode.id,
+        abstracts: abstractsNode.id,
+        metastudy: metastudyNode.id,
+        terpStudy: terpStudyNode.id,
+        adhdSurveyQuestion: adhdSurveyQuestionNode.id,
+        adhdSurveyAnswer: adhdSurveyAnswerNode.id,
+        adhdSurveyArtifact: adhdSurveyArtifactNode.id,
+        terpBriefQuestion: terpBriefQuestionNode.id,
+        terpBriefAnswer: terpBriefAnswerNode.id,
+        terpBriefArtifact: terpBriefArtifactNode.id,
+        productArtifact: productArtifactNode.id,
+      };
+
+      connectNodes(questionNode.id, promptNode.id, flowId);
+      connectNodes(promptNode.id, answerNode.id, flowId);
+      connectNodes(answerNode.id, evidenceNode.id, flowId);
+      connectNodes(answerNode.id, termsNode.id, flowId);
+      connectNodes(answerNode.id, claimsNode.id, flowId);
+      connectNodes(evidenceNode.id, termsNode.id, flowId);
+      connectNodes(termsNode.id, claimsNode.id, flowId);
+      connectNodes(claimsNode.id, abstractsNode.id, flowId);
+      connectNodes(abstractsNode.id, metastudyNode.id, flowId);
+      connectNodes(metastudyNode.id, terpStudyNode.id, flowId);
+      connectNodes(adhdSurveyQuestionNode.id, adhdSurveyAnswerNode.id, flowId);
+      connectNodes(adhdSurveyAnswerNode.id, adhdSurveyArtifactNode.id, flowId);
+      connectNodes(terpBriefQuestionNode.id, terpBriefAnswerNode.id, flowId);
+      connectNodes(terpBriefAnswerNode.id, terpBriefArtifactNode.id, flowId);
+      connectNodes(terpBriefArtifactNode.id, productArtifactNode.id, flowId);
 
   };
 
@@ -1438,13 +1810,15 @@ const refreshPrompt = (flowId) => {
   if (!flowRecord) return;
   const promptNode = document.querySelector(`#${flowRecord.nodes.prompt} [data-role="promptContent"]`);
   if (promptNode) {
-    promptNode.textContent = buildPrompt(flowRecord.data.question);
+    promptNode.textContent = composeBriefingPrompt(flowRecord.data.question, flowRecord.data.briefingPrompt);
   }
   const promptSection = document.getElementById(flowRecord.nodes.prompt);
   if (promptSection && typeof promptSection.__setSummary === "function") {
-    const summaryText = flowRecord.data.question
-      ? truncateText(`Briefing for “${flowRecord.data.question}”`, 110)
-      : "System briefing template";
+    const summaryText = flowRecord.data.briefingPrompt
+      ? truncateText(flowRecord.data.briefingPrompt, 110)
+      : flowRecord.data.question
+        ? truncateText(`Briefing for “${flowRecord.data.question}”`, 110)
+        : "System briefing template";
     promptSection.__setSummary(summaryText);
   }
   if (jsPlumbInstance) {
@@ -1485,6 +1859,7 @@ const refreshLLM = (flowId) => {
  */
 const INITIAL_FLOW = {
   question: "Can terpenes play a role in working with ADHD?",
+  briefingPrompt: defaultBriefingPrompt,
   papers: [
     {
       title: "Linalool Modulates Prefrontal Cortical Oscillations Linked to Sustained Attention",
@@ -1522,18 +1897,30 @@ const INITIAL_FLOW = {
   ],
   metastudy: DEFAULT_METASTUDY,
   terpStudy: DEFAULT_TERP_STUDY,
+  adhdSurveyChain: ADHD_ATTENTION_CHAIN,
+  terpeneChain: ADHD_TERPENE_CHAIN,
+  productBlueprint: PRODUCT_BLUEPRINT_ARTIFACT,
 };
 
-const bootstrapWorkspace = () => {
+const bootstrapWorkspace = async () => {
   ensureJsPlumbInstance();
+  await loadGraphDefinition();
+  applyGraphDefinition(graphDefinition);
   createInquiryFlow(cloneDeep(INITIAL_FLOW), 0);
+  registerLayoutObservedElements();
   updateBadgeTimestamp();
 };
 
+registerFontLayoutFallback();
+
 if (window.jsPlumb && typeof window.jsPlumb.ready === "function") {
-  window.jsPlumb.ready(bootstrapWorkspace);
+  window.jsPlumb.ready(() => {
+    bootstrapWorkspace();
+  });
 } else {
-  window.addEventListener("load", bootstrapWorkspace);
+  window.addEventListener("load", () => {
+    bootstrapWorkspace();
+  });
 }
 
 newFlowButton.addEventListener("click", () => {
