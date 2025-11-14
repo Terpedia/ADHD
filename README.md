@@ -50,3 +50,14 @@ All interfaces will be defined in JSON schemas so the same calls work locally or
 ## Updating Artifact Cards
 - Markdown artifacts (`type: "markdown"`) render formatted copy and Kroki diagrams inside fenced code blocks (` ```kroki-diagramType ... ``` `).
 - Scholarly references (`type: "reference"`) show title, journal metadata, abstract, and optional notes.
+
+## Git Hooks
+Mermaid syntax validation runs on `git push` via `githooks/pre-push`. To enable project hooks:
+
+```bash
+git config core.hooksPath githooks
+```
+
+Dependencies:
+- Node.js with `npx` available (for `@mermaid-js/mermaid-cli`).
+- Python 3 for `scripts/check_mermaid.py`.
