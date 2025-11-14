@@ -395,3 +395,39 @@ if (file.exists("data/extraction_stimulant_rcts.csv")) {
 - Packages: metafor, dplyr, readr</code></pre>
       </section>
 
+      <section class="meta-methods__section meta-methods__section--report">
+        <h2>ADHD Meta-Study Output (`ADHD.md`)</h2>
+        <article class="meta-methods__card">
+          <div id="adhd-report-content">Loading ADHD.md&hellip;</div>
+        </article>
+      </section>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: 'dark',
+        themeVariables: {
+          fontFamily: "'Economica', 'Inter', sans-serif",
+        },
+      });
+
+      const reportTarget = document.getElementById('adhd-report-content')
+      if (reportTarget) {
+        fetch('ADHD.md')
+          .then((response) => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`)
+            return response.text()
+          })
+          .then((markdown) => {
+            reportTarget.innerHTML = marked.parse(markdown)
+          })
+          .catch((error) => {
+            console.error('Failed to load ADHD.md', error)
+            reportTarget.textContent = 'Failed to load ADHD.md.'
+          })
+      }
+    </script>
+  </body>
+</html>

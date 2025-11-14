@@ -225,20 +225,39 @@ rob2_overall,notes</code></pre>
         </div>
       </section>
 
-      <section class="meta-methods__section">
-        <h2>Next Steps</h2>
-        <ul>
-          <li>Finalize search syntax and upload to Rayyan with dual reviewer assignments.</li>
-          <li>Populate extraction template with at least three pilot trials to validate schema.</li>
-          <li>Implement meta-regression helpers in <code>analysis/meta_analysis.R</code> for terpene subgroup analysis.</li>
-          <li>Draft statistical analysis plan (SAP) referencing <a href="https://cran.r-project.org/package=metafor" target="_blank" rel="noreferrer">metafor</a> models and DSM outcome measures.</li>
-          <li>Coordinate with product team to align dosing hypotheses with current Focus on Focus™ roadmap.</li>
-        </ul>
+      <section class="meta-methods__section meta-methods__section--report">
+        <h2>ADHD Terpene Study Output (`ADHD_Terpenes.md`)</h2>
+        <article class="meta-methods__card">
+          <div id="adhd-terpenes-report">Loading ADHD_Terpenes.md&hellip;</div>
+        </article>
       </section>
     </main>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
-      mermaid.initialize({ startOnLoad: true, theme: "dark" });
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "dark",
+        themeVariables: {
+          fontFamily: "'Economica', 'Inter', sans-serif",
+        },
+      });
+
+      const terpenesReport = document.getElementById('adhd-terpenes-report')
+      if (terpenesReport) {
+        fetch('ADHD_Terpenes.md')
+          .then((response) => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`)
+            return response.text()
+          })
+          .then((markdown) => {
+            terpenesReport.innerHTML = marked.parse(markdown)
+          })
+          .catch((error) => {
+            console.error('Failed to load ADHD_Terpenes.md', error)
+            terpenesReport.textContent = 'Failed to load ADHD_Terpenes.md.'
+          })
+      }
     </script>
   </body>
 </html>
