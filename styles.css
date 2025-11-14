@@ -67,6 +67,15 @@ a:hover {
   line-height: 1.1;
 }
 
+.deck__subtitle {
+  margin: 0 0 1rem;
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(94, 234, 212, 0.8);
+  font-family: 'Economica', 'Inter', sans-serif;
+}
+
 .deck__header p {
   margin: 0;
   font-size: 1.05rem;
