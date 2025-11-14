@@ -2,9 +2,9 @@ flowchart TD
 
 %% PHASE 1: SEARCH & INGEST
 subgraph S1[Search & Ingest]
-  A1[AI Assistant\n(ChatGPT etc.)\n• Drafts search strings\n• Designs templates] 
-  A2[Databases\nPubMed, Embase,\nPsycINFO, Cochrane, WoS]
-  A3[Reference Manager\nZotero / EndNote]
+  A1["AI Assistant<br/>(ChatGPT etc.)<br/>- Drafts search strings<br/>- Designs templates"] 
+  A2["Databases<br/>PubMed, Embase,<br/>PsycINFO, Cochrane, WoS"]
+  A3["Reference Manager<br/>Zotero / EndNote"]
   
   A1 --> A2
   A2 -->|export RIS/BibTeX| A3
@@ -12,10 +12,10 @@ end
 
 %% PHASE 2: SCREEN & SELECT
 subgraph S2[Screen & Select Studies]
-  B1[Screening Tool\nRayyan / Covidence]
-  B2[Title/Abstract Screening\n2 human reviewers]
-  B3[Full-Text Screening\n2 human reviewers]
-  B4[PRISMA Counts\n(flow diagram data)]
+  B1["Screening Tool<br/>Rayyan / Covidence"]
+  B2["Title/Abstract Screening<br/>2 human reviewers"]
+  B3["Full-Text Screening<br/>2 human reviewers"]
+  B4["PRISMA Counts<br/>(flow diagram data)"]
   
   A3 -->|deduped references| B1
   B1 --> B2 --> B3 --> B4
@@ -23,19 +23,19 @@ end
 
 %% PHASE 3: CLASSIFY & SPLIT
 subgraph S3[Classify & Split Evidence]
-  C1[Included Meta-analyses\n(ADHD interventions)]
-  C2[Included RCTs\n(Terpenes & others)]
+  C1["Included Meta-analyses<br/>(ADHD interventions)"]
+  C2["Included RCTs<br/>(Terpenes & others)"]
   
-  B3 -->|meta-analyses| C1
-  B3 -->|RCTs (esp. terpenes)| C2
+  B3 -->|Meta-analyses| C1
+  B3 -->|Terpene RCTs| C2
 end
 
 %% PHASE 4: EXTRACT & STORE
 subgraph S4[Extract & Store Data]
-  D1[Extraction Templates\n• extraction_meta_analyses.csv\n• extraction_terpene_rcts.csv\n(Generated with AI)]
-  D2[Data Entry\nREDCap / Google Sheets]
-  D3[Clean CSVs in Repo\n/data/*.csv]
-  D4[Quality Assessment\nAMSTAR 2, RoB 2\n(amstar2_meta_analyses.csv,\nrob2_terpene_rcts.csv)]
+  D1["Extraction Templates<br/>- extraction_meta_analyses.csv<br/>- extraction_terpene_rcts.csv<br/>(Generated with AI)"]
+  D2["Data Entry<br/>REDCap / Google Sheets"]
+  D3["Clean CSVs in Repo<br/>/data/*.csv"]
+  D4["Quality Assessment<br/>AMSTAR 2, RoB 2<br/>(amstar2_meta_analyses.csv,<br/>rob2_terpene_rcts.csv)"]
   
   A1 --> D1
   C1 --> D2
@@ -46,9 +46,9 @@ end
 
 %% PHASE 5: ANALYZE
 subgraph S5[Analyze]
-  E1[R Scripts\n(meta_analysis.R)\nmetafor, dplyr, readr]
-  E2[De Novo Meta-analyses\nSMDs, CIs, I², PI]
-  E3[Plots\nForest/Funnel PDFs\n/figures/*.pdf]
+  E1["R Scripts<br/>(meta_analysis.R)<br/>metafor, dplyr, readr"]
+  E2["De Novo Meta-analyses<br/>SMDs, CIs, I^2, PI"]
+  E3["Plots<br/>Forest/Funnel PDFs<br/>/figures/*.pdf"]
   
   D3 --> E1
   D4 --> E1
@@ -57,10 +57,10 @@ end
 
 %% PHASE 6: SYNTHESIZE & PUBLISH
 subgraph S6[Synthesize, Publish & Integrate]
-  F1[AI Assistant\n• Drafts Methods, Results, Discussion\n• Builds figures & tables text]
-  F2[Manuscript\n(Nature-style umbrella review)]
-  F3[Project Repo\nGitHub / OSF\n(code + data + figs)]
-  F4[Terpedia Content\nADHD.md, ADHD_Terpenes.md\nRAG / KB integration]
+  F1["AI Assistant<br/>- Drafts Methods, Results, Discussion<br/>- Builds figures & tables text"]
+  F2["Manuscript<br/>(Nature-style umbrella review)"]
+  F3["Project Repo<br/>GitHub / OSF<br/>(code + data + figs)"]
+  F4["Terpedia Content<br/>ADHD.md, ADHD_Terpenes.md<br/>RAG / KB integration"]
   
   E2 --> F1
   E3 --> F1
@@ -74,7 +74,7 @@ end
 
 %% CROSS-CUTTING: PROSPERO
 subgraph S0[Protocol & Governance]
-  G1[PROSPERO Registration\nProtocol text\n(assisted by AI)]
+  G1["PROSPERO Registration<br/>Protocol text<br/>(assisted by AI)"]
 end
 
 G1 --> S2

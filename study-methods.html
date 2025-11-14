@@ -47,48 +47,48 @@
 flowchart TD
 
     subgraph P0[Program Governance]
-      G1[protocol workspace\nstudy-methods.html]
-      G2[LLM prompts\nADHD_Terpenes.md]
-      G3[PROSPERO linkage\ncrd.york.ac.uk/prospero]
+      G1["protocol workspace<br/>study-methods.html"]
+      G2["LLM prompts<br/>ADHD_Terpenes.md"]
+      G3["PROSPERO linkage<br/>crd.york.ac.uk/prospero"]
     G1 --> G2
       G1 --> G3
   end
 
   subgraph P1[Search & Landscape]
-    S1[AI assistant drafts\ndatabase strings]
-    S2[Execute searches in\nPubMed, Embase, PsycINFO,\nWeb of Science, Cochrane]
-    S3[Manual additions from\nClinicalTrials.gov\nand trial registries]
+    S1["AI assistant drafts<br/>database strings"]
+    S2["Execute searches in<br/>PubMed, Embase, PsycINFO,<br/>Web of Science, Cochrane"]
+    S3["Manual additions from<br/>ClinicalTrials.gov<br/>and trial registries"]
     S1 --> S2
     S2 --> S3
   end
 
   subgraph P2[Screen & Select]
-    R1[Rayyan / Covidence\n(title + abstract)]
-    R2[Full-text review\n(dual human)]
+    R1["Rayyan / Covidence<br/>(title + abstract)"]
+    R2["Full-text review<br/>(dual human)"]
     R3[Document PRISMA counts]
     S3 --> R1 --> R2 --> R3
   end
 
   subgraph P3[Extract & Synthesize]
-    E1[Targeted extraction sheet\n/data/extraction_terpene_rcts.csv]
-    E2[Quality appraisal\nRoB 2 + CONSORT]
-    E3[LLM-assisted prompt fill\nfocus briefing blocks]
+    E1["Targeted extraction sheet<br/>/data/extraction_terpene_rcts.csv"]
+    E2["Quality appraisal<br/>RoB 2 + CONSORT"]
+    E3["LLM-assisted prompt fill<br/>focus briefing blocks"]
     R2 --> E1
     E1 --> E2
     E1 --> E3
   end
 
   subgraph P4[Model & Interpret]
-    M1[R scripts\n(meta_analysis.R\n+ targeted functions)]
-    M2[Effect estimation\nHedges g + CIs + meta-regressions]
-    M3[Product blueprint inputs\npharmacokinetics, dosing bands]
+    M1["R scripts<br/>(meta_analysis.R<br/>+ targeted functions)"]
+    M2["Effect estimation<br/>Hedges g + CIs + meta-regressions"]
+    M3["Product blueprint inputs<br/>pharmacokinetics, dosing bands"]
     E2 --> M1 --> M2 --> M3
   end
 
   subgraph P5[Report & Deliver]
-    D1[Study narrative\nTeredpia knowledge base]
-    D2[Manuscript package\nsubmission-ready]
-    D3[Product dossier\nFocus on Focus updates]
+    D1["Study narrative<br/>Teredpia knowledge base"]
+    D2["Manuscript package<br/>submission-ready"]
+    D3["Product dossier<br/>Focus on Focus updates"]
     M2 --> D1
     M2 --> D2
     M3 --> D3
