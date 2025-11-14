@@ -170,6 +170,7 @@
 
         const Slide = ({ slide, index, total }) => {
           const points = slide.content.map(toPoint)
+          const progress = ((index + 1) / total) * 100
 
           return (
             <section className="deck__slide" role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${total}`}>
@@ -177,6 +178,11 @@
                 <p className="deck__slide-count">{index + 1} / {total}</p>
                 <h2>{slide.title}</h2>
               </header>
+              <div className="deck__progress" aria-hidden="true">
+                <div className="deck__progress-track">
+                  <div className="deck__progress-bar" style={{ width: `${progress}%` }} />
+                </div>
+              </div>
               <div className="deck__slide-points">
                 {points.map((point, idx) => {
                   const key = `${point.label ?? point.body}-${idx}`
@@ -186,7 +192,10 @@
                       <p className="deck__point-body">
                         {point.type === 'link' ? (
                           <>
-                            <a href={point.href}>{point.body}</a>
+                            <a className="deck__point-link" href={point.href}>
+                              <span className="deck__point-link-icon" aria-hidden="true">↗</span>
+                              <span>{point.body}</span>
+                            </a>
                             {point.note ? <span className="deck__point-note"> – {point.note}</span> : null}
                           </>
                         ) : (
